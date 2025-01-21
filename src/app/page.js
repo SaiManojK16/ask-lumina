@@ -139,7 +139,7 @@ export default function Home() {
           </main>
 
           <footer className="flex justify-center items-center my-6">
-            <div className="p-2 bg-tertiary-light dark:bg-tertiary-dark rounded-lg w-3/4 flex flex-col justify-center items-end">
+            <div className="w-11/12 lg:w-3/4 p-2 bg-tertiary-light dark:bg-tertiary-dark rounded-lg flex flex-col justify-center items-end">
             <textarea
               className="w-full p-2  bg-transparent text-regular-light dark:text-regular-dark focus:outline-none resize-none"
               placeholder="Ask Lumina"
