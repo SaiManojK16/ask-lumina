@@ -97,7 +97,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col bg-primary-light dark:bg-primary-dark transition-all duration-300 ease-in-out">
         <Header sidebar={sidebar} toggleSidebar={toggleSidebar} handleNewChat={handleNewChat} isDarkMode={isDarkMode} toggleTheme={toggleTheme}/>
         <main className="mt-5 flex-1 flex justify-center overflow-y-auto space-y-4">
-          <div className="w-3/4">
+          <div className="w-full md:w-11/12 lg:w-3/4">
             {messages.length === 0 ? (
               <div className="flex flex-col justify-center items-center h-full gap-6">
                   <Image
@@ -120,7 +120,7 @@ export default function Home() {
                   <div
                     className={`relative px-6 py-1.5 rounded-md border-t border-l border-b overflow-hidden ${
                       message.role === 'user'
-                        ? "border-tertiary-light max-w-[80%] dark:border-tertiary-dark text-regular-light dark:text-regular-dark"
+                        ? "border-tertiary-light mr-4 max-w-[80%] dark:border-tertiary-dark text-regular-light dark:text-regular-dark"
                         : "border-transparent text-regular-light dark:text-regular-dark w-full"
                     }`}
                   >
