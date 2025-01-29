@@ -59,16 +59,16 @@ export async function POST(req) {
       messages: updatedMessages,
       stream: true,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 4096, // Increased from 1000 to near model's max token limit
     });
 
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            controller.enqueue(content);
-          }
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              controller.enqueue(content);
+            }
         }
         controller.close();
       },
