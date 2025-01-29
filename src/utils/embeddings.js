@@ -15,6 +15,50 @@ function cleanText(text) {
 function chunkContent() {
   const chunks = [];
 
+  // Consolidate all product information into single, comprehensive chunks
+  luminaInfo.products.forEach(product => {
+    const productChunk = {
+      content: cleanText(`
+        Product Overview: ${product.name}
+        
+        Basic Specifications:
+        - Gain: ${product.gain}
+        - Material: ${product.material}
+        - Surface: ${product.surface}
+        - Projection Type: ${product.projectionType || 'Not specified'}
+        
+        Detailed Description:
+        ${product.description || 'No detailed description available'}
+        
+        Key Features:
+        ${product.keyFeatures ? product.keyFeatures.map(feature => `- ${feature}`).join('\n') : 'No specific features listed'}
+        
+        Product Specifications:
+        ${product.productSpecs ? product.productSpecs.map(spec => `- ${spec}`).join('\n') : 'No additional specifications'}
+        
+        Unique Selling Points:
+        ${product.features ? product.features.map(feature => 
+          `${feature.title}: ${Array.isArray(feature.details) ? feature.details.join(', ') : feature.details}`
+        ).join('\n') : 'No specific unique selling points'}
+        
+        Why Choose This Product:
+        ${product.whyChooseThis ? 
+          (Array.isArray(product.whyChooseThis) ? 
+            product.whyChooseThis.map(point => `- ${point}`).join('\n') : 
+            product.whyChooseThis
+          ) : 'No specific reasons provided'}
+      `),
+      metadata: { 
+        type: 'product_comprehensive',
+        name: product.name,
+        sections: ['overview', 'specs', 'features', 'usp']
+      }
+    };
+
+    chunks.push(productChunk);
+  });
+
+  // Keep other existing chunks for context
   // Company Overview and Basic Information
   chunks.push({
     content: cleanText(`
@@ -43,78 +87,7 @@ function chunkContent() {
     }
   });
 
-  // Key Features
-  chunks.push({
-    content: cleanText(`
-      Key Features of Lumina Screens:
-      ${luminaInfo.keyFeatures.join('\n')}
-    `),
-    metadata: { 
-      type: 'features',
-      sections: ['key_features']
-    }
-  });
-
-  // Process each product separately
-  luminaInfo.products.forEach(product => {
-    // Main product information
-    chunks.push({
-      content: cleanText(`
-        Product: ${product.name}
-        Gain: ${product.gain}
-        Material: ${product.material}
-        Surface: ${product.surface}
-        Projection Type: ${product.projectionType}
-        Description: ${product.description}
-        ${product.keyFeatures ? `Key Features:\n${product.keyFeatures.join('\n')}` : ''}
-        ${product.productSpecs ? `Product Specifications:\n${product.productSpecs.join('\n')}` : ''}
-      `),
-      metadata: { 
-        type: 'product',
-        name: product.name,
-        sections: ['basic_info', 'features', 'specs']
-      }
-    });
-
-    // Detailed features if available
-    if (product.features && product.features.length > 0) {
-      product.features.forEach(feature => {
-        chunks.push({
-          content: cleanText(`
-            Product: ${product.name}
-            Feature: ${feature.title}
-            Details: ${Array.isArray(feature.details) ? feature.details.map(detail => 
-              Array.isArray(detail) ? detail.join('\n') : detail
-            ).join('\n') : feature.details}
-          `),
-          metadata: { 
-            type: 'product_feature',
-            product: product.name,
-            feature: feature.title
-          }
-        });
-      });
-    }
-
-    // Why Choose This section if available
-    if (product.whyChooseThis && product.whyChooseThis.length > 0) {
-      chunks.push({
-        content: cleanText(`
-          Product: ${product.name}
-          Why Choose This Product:
-          ${Array.isArray(product.whyChooseThis) ? product.whyChooseThis.map(detail => 
-            Array.isArray(detail) ? detail.join('\n') : detail
-          ).join('\n') : product.whyChooseThis}
-        `),
-        metadata: { 
-          type: 'product_benefits',
-          product: product.name
-        }
-      });
-    }
-  });
-
-  // Process Unique Selling Points
+  // Unique Selling Points
   luminaInfo.uniqueSellingPoints.forEach(usp => {
     chunks.push({
       content: cleanText(`
@@ -130,6 +103,18 @@ function chunkContent() {
         title: usp.title
       }
     });
+  });
+
+  // Key Features
+  chunks.push({
+    content: cleanText(`
+      Key Features of Lumina Screens:
+      ${luminaInfo.keyFeatures.join('\n')}
+    `),
+    metadata: { 
+      type: 'features',
+      sections: ['key_features']
+    }
   });
 
   // Market Presence
@@ -244,17 +229,26 @@ export async function searchRelevantContent(query) {
 
     const { data: matches, error } = await supabase.rpc('match_embeddings', {
       query_embedding: embedding.data[0].embedding,
-      match_threshold: 0.7, // Adjust this threshold as needed
-      match_count: 5 // Adjust the number of matches as needed
+      match_threshold: 0.5, // Lowered threshold to include more matches
+      match_count: 70 // Increased to retrieve more content
     });
 
     if (error) throw error;
 
-    return matches.map(match => ({
+    // Filter and prioritize product-related matches
+    const productMatches = matches.filter(match => 
+      match.metadata && 
+      (match.metadata.type === 'product_comprehensive' || match.metadata.type === 'product_feature')
+    );
+
+    // If no product matches, return all matches
+    const finalMatches = productMatches.length > 0 ? productMatches : matches;
+
+    return finalMatches.map(match => ({
       content: match.content,
       similarity: match.similarity,
       metadata: match.metadata
-    }));
+    })).slice(0, 10); // Limit to top 10 matches
   } catch (error) {
     console.error('Error in searchRelevantContent:', error);
     throw error;
