@@ -50,8 +50,9 @@ export async function POST(req) {
       ...messages
     ];
 
+    // Use GPT-3.5 to reduce token generation time
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',
       messages: updatedMessages,
       stream: true,
       temperature: 0.5,  // Lower temperature for more focused responses
@@ -63,14 +64,25 @@ export async function POST(req) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            controller.enqueue(content);
+        try {
+          let fullResponse = '';
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              fullResponse += content;
+              controller.enqueue(content);
+            }
           }
+          
+          // Log full response for debugging
+          console.log('Full AI Response:', fullResponse);
+          
+          controller.close();
+        } catch (streamError) {
+          console.error('Stream processing error:', streamError);
+          controller.error(streamError);
         }
-        controller.close();
-      },
+      }
     });
 
     return new Response(stream, {
@@ -81,8 +93,16 @@ export async function POST(req) {
       },
     });
   } catch (error) {
-    console.error('Error streaming response:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error in OpenAI route:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+
+    return new Response(JSON.stringify({ 
+      error: 'Request processing failed', 
+      details: error.message 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
