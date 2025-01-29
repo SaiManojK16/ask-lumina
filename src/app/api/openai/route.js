@@ -54,24 +54,73 @@ export async function POST(req) {
       ...messages
     ];
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: updatedMessages,
-      stream: true,
-      temperature: 0.7,
-      max_tokens: 2048,
-    });
+    // Recursive function to generate complete responses
+    async function generateCompleteResponse(currentMessages, maxAttempts = 3) {
+      if (maxAttempts <= 0) {
+        throw new Error('Unable to generate a complete response');
+      }
 
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: currentMessages,
+        stream: false,  // Use non-streaming for full response
+        temperature: 0.7,
+        max_tokens: 4096,  // Maximum allowed tokens
+        top_p: 0.95,  // More deterministic sampling
+      });
+
+      const fullResponse = response.choices[0].message.content;
+
+      // Check if response seems incomplete
+      const isComplete = checkResponseCompleteness(fullResponse, userMessage);
+
+      if (!isComplete) {
+        // If incomplete, add a prompt to continue
+        const continuationPrompt = {
+          role: 'user',
+          content: `Please continue the previous response. The last response seemed incomplete. Continue from where you left off, providing a comprehensive answer to the original query: "${userMessage}"`
+        };
+
+        return generateCompleteResponse([...currentMessages, 
+          { role: 'assistant', content: fullResponse },
+          continuationPrompt
+        ], maxAttempts - 1);
+      }
+
+      return fullResponse;
+    }
+
+    // Function to check response completeness
+    function checkResponseCompleteness(response, originalQuery) {
+      // Implement sophisticated checks
+      const minResponseLength = 500;  // Minimum characters
+      const keywordCoverage = [
+        'Lumina',
+        'screen',
+        'projection',
+        'home theatre',
+        ...originalQuery.split(/\s+/)
+      ];
+
+      const hasMinLength = response.length >= minResponseLength;
+      const hasKeywordCoverage = keywordCoverage.every(keyword => 
+        response.toLowerCase().includes(keyword.toLowerCase())
+      );
+
+      return hasMinLength && hasKeywordCoverage;
+    }
+
+    // Generate the complete response
+    const completeResponse = await generateCompleteResponse(updatedMessages);
+
+    // Stream the complete response
     const stream = new ReadableStream({
-      async start(controller) {
-          for await (const chunk of response) {
-            const content = chunk.choices[0]?.delta?.content;
-            if (content) {
-              controller.enqueue(content);
-            }
-        }
+      start(controller) {
+        // Chunk the response to simulate streaming
+        const chunks = chunkString(completeResponse, 50);
+        chunks.forEach(chunk => controller.enqueue(chunk));
         controller.close();
-      },
+      }
     });
 
     return new Response(stream, {
@@ -81,11 +130,24 @@ export async function POST(req) {
         Connection: 'keep-alive',
       },
     });
+
   } catch (error) {
-    console.error('Error streaming response:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error generating response:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to generate a complete response', 
+      details: error.message 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
+}
+
+// Utility function to chunk string for streaming
+function chunkString(str, length) {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += length) {
+    chunks.push(str.slice(i, i + length));
+  }
+  return chunks;
 }
