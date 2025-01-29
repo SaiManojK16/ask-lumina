@@ -5,8 +5,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const runtime = 'edge'; // Add edge runtime
-
 const systemMessage = {
   role: 'system',
   content: `
@@ -24,8 +22,6 @@ const systemMessage = {
     3. You ARE the expert - provide direct, specific advice
     4. Use actual product specifications and features from the context
     5. If information isn't in the context, acknowledge it directly and focus on what you do know
-    6. Keep responses concise and to the point
-    7. Never leave responses incomplete - always finish your thoughts
     
     Format your responses using markdown:
     1. Use **bold** for emphasis and product names
@@ -68,13 +64,13 @@ export async function POST(req) {
 
     const stream = new ReadableStream({
       async start(controller) {
-          for await (const chunk of response) {
-            const content = chunk.choices[0]?.delta?.content;
-            if (content) {
-              controller.enqueue(content);
-            }
+        for await (const chunk of response) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            controller.enqueue(content);
           }
-          controller.close();
+        }
+        controller.close();
       },
     });
 
@@ -86,10 +82,10 @@ export async function POST(req) {
       },
     });
   } catch (error) {
-    console.error('Error in edge function:', error);
+    console.error('Error streaming response:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
