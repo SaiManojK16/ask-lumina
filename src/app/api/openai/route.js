@@ -22,7 +22,7 @@ const systemMessage = {
     3. You ARE the expert - provide direct, specific advice
     4. Use actual product specifications and features from the context
     5. If information isn't in the context, acknowledge it directly and focus on what you do know
-    
+    6. Do not give incomplete responses - always complete the request    
     Format your responses using markdown:
     1. Use **bold** for emphasis and product names
     2. Use proper headings (# ## ###) for sections
@@ -59,7 +59,7 @@ export async function POST(req) {
       messages: updatedMessages,
       stream: true,
       temperature: 0.7,
-      max_tokens: 4096, // Increased from 1000 to near model's max token limit
+      max_tokens: 2048,
     });
 
     const stream = new ReadableStream({
