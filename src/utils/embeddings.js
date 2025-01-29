@@ -165,20 +165,33 @@ function chunkContent() {
   // Contact Information
   chunks.push({
     content: cleanText(`
-      Contact Information:
+      Lumina Screens - Contact Information
+
+      Company Headquarters:
       Address: ${luminaInfo.contactInformation.address}
-      Email: ${luminaInfo.contactInformation.email}
-      Phone: ${luminaInfo.contactInformation.phone}
-      Website: ${luminaInfo.contactInformation.website}
-      Social Media:
-      Facebook: ${luminaInfo.contactInformation.facebook}
-      Instagram: ${luminaInfo.contactInformation.instagram}
-      LinkedIn: ${luminaInfo.contactInformation.linkein}
-      YouTube: ${luminaInfo.contactInformation.youtube}
+      
+      Communication Channels:
+      - Email: ${luminaInfo.contactInformation.email}
+      - Phone: ${luminaInfo.contactInformation.phone}
+      - Website: ${luminaInfo.contactInformation.website}
+
+      Social Media Presence:
+      - Facebook: ${luminaInfo.contactInformation.facebook}
+      - Instagram: ${luminaInfo.contactInformation.instagram}
+      - LinkedIn: ${luminaInfo.contactInformation.linkein}
+      - YouTube: ${luminaInfo.contactInformation.youtube}
+
+      Customer Support:
+      - For product inquiries and support, please use the contact details above
+      - Business Hours: ${luminaInfo.businessHours || ''}
+
+      Additional Contact Notes:
+      - Global Reach: Headquartered in Mumbai, India
+      - International Presence: Serving customers worldwide
     `),
     metadata: { 
       type: 'contact',
-      sections: ['contact_info', 'social_media']
+      sections: ['headquarters', 'communication', 'social_media', 'support']
     }
   });
 
@@ -235,16 +248,29 @@ export async function searchRelevantContent(query) {
 
     if (error) throw error;
 
-    // Filter and prioritize product-related matches
+    // Filter and prioritize matches
     const productMatches = matches.filter(match => 
       match.metadata && 
-      (match.metadata.type === 'product_comprehensive' || match.metadata.type === 'product_feature')
+      (match.metadata.type === 'product_comprehensive' || 
+       match.metadata.type === 'product_feature' ||
+       match.metadata.type === 'contact')
     );
 
     // If no product matches, return all matches
     const finalMatches = productMatches.length > 0 ? productMatches : matches;
 
-    return finalMatches.map(match => ({
+    // Ensure contact information is always included if available
+    const contactMatches = matches.filter(match => 
+      match.metadata && match.metadata.type === 'contact'
+    );
+
+    // Combine matches, prioritizing product and contact information
+    const combinedMatches = [
+      ...productMatches,
+      ...(contactMatches.length > 0 ? contactMatches : [])
+    ];
+
+    return combinedMatches.map(match => ({
       content: match.content,
       similarity: match.similarity,
       metadata: match.metadata
