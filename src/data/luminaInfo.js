@@ -520,6 +520,7 @@ export const luminaInfo = {
     email: "info@luminascreens.com",
     phone: "+91 22 4963 3040 / +91 22 4969 3700",
     website: "www.luminascreens.com",
+    businessHours: "Monday to Saturday: 9:00 AM to 5:30 PM",
     facebook: "https://www.facebook.com/luminascreens/",
     instagram: "https://www.instagram.com/luminaprojectionscreens/",
     linkein: "https://www.linkedin.com/company/lumina-screens/",

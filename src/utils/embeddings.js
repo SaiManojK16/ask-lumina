@@ -15,7 +15,42 @@ function cleanText(text) {
 function chunkContent() {
   const chunks = [];
 
-  // Consolidate all product information into single, comprehensive chunks
+  // Complete Product Overview
+  chunks.push({
+    content: cleanText(`
+      LUMINA SCREENS - COMPLETE PRODUCT LINEUP
+
+      Product Introduction:
+      ${luminaInfo.productIntroduction}
+
+      Available Products:
+      ${luminaInfo.products.map(product => `
+        ${product.name}
+        - Gain: ${product.gain}
+        - Material: ${product.material}
+        - Surface: ${product.surface}
+        - Projection Type: ${product.projectionType || 'Not specified'}
+        - Brief Overview: ${product.description ? product.description.split('.')[0] + '.' : 'No description available'}
+      `).join('\n\n')}
+    `),
+    metadata: {
+      type: 'product_overview',
+      sections: ['overview', 'all_products', 'introduction'],
+      keywords: [
+        'all products',
+        'product lineup',
+        'available products',
+        'product range',
+        'screens',
+        'projection screens',
+        ...luminaInfo.products.map(p => p.name.toLowerCase()),
+        ...luminaInfo.products.map(p => p.material.toLowerCase()),
+        ...luminaInfo.products.map(p => p.surface.toLowerCase())
+      ]
+    }
+  });
+
+  // Individual Product Information
   luminaInfo.products.forEach(product => {
     const productChunk = {
       content: cleanText(`
@@ -51,14 +86,26 @@ function chunkContent() {
       metadata: { 
         type: 'product_comprehensive',
         name: product.name,
-        sections: ['overview', 'specs', 'features', 'usp']
+        sections: ['overview', 'specs', 'features', 'usp'],
+        keywords: [
+          product.name.toLowerCase(),
+          product.gain,
+          product.material,
+          product.surface,
+          product.projectionType,
+          'product',
+          'screen',
+          'specifications',
+          'features',
+          'technical details',
+          'product information'
+        ]
       }
     };
 
     chunks.push(productChunk);
   });
 
-  // Keep other existing chunks for context
   // Company Overview and Basic Information
   chunks.push({
     content: cleanText(`
@@ -70,7 +117,8 @@ function chunkContent() {
     `),
     metadata: { 
       type: 'company_info',
-      sections: ['overview', 'about', 'journey', 'vision', 'mission']
+      sections: ['overview', 'about', 'journey', 'vision', 'mission'],
+      keywords: ['company', 'about', 'overview', 'journey', 'vision', 'mission', 'lumina', 'screens', 'about us']
     }
   });
 
@@ -83,54 +131,60 @@ function chunkContent() {
     `),
     metadata: { 
       type: 'company_values',
-      sections: ['innovation', 'legacy', 'products_intro']
+      sections: ['innovation', 'legacy', 'products_intro'],
+      keywords: ['innovation', 'legacy', 'technology', 'commitment', 'introduction', 'products']
     }
   });
 
-  // Unique Selling Points
-  luminaInfo.uniqueSellingPoints.forEach(usp => {
-    chunks.push({
-      content: cleanText(`
-        USP: ${usp.title}
-        Details: ${Array.isArray(usp.details) ? 
-          usp.details.map(detail => 
-            Array.isArray(detail) ? detail.join('\n') : detail
-          ).join('\n') 
-          : usp.details}
-      `),
-      metadata: { 
-        type: 'usp',
-        title: usp.title
-      }
-    });
-  });
-
-  // Key Features
+  // Consolidated Unique Selling Points
   chunks.push({
     content: cleanText(`
-      Key Features of Lumina Screens:
-      ${luminaInfo.keyFeatures.join('\n')}
+      UNIQUE SELLING POINTS OF LUMINA SCREENS
+
+      ${luminaInfo.uniqueSellingPoints.map(usp => `
+        ${usp.title}:
+        ${Array.isArray(usp.details) ? 
+          usp.details.map(detail => `- ${detail}`).join('\n') 
+          : usp.details}
+      `).join('\n\n')}
     `),
     metadata: { 
-      type: 'features',
-      sections: ['key_features']
+      type: 'unique_selling_points',
+      sections: ['usp'],
+      keywords: [
+        'unique selling points',
+        'usp',
+        'advantages',
+        'benefits',
+        ...luminaInfo.uniqueSellingPoints.map(usp => usp.title.toLowerCase())
+      ]
     }
   });
 
-  // Market Presence
-  luminaInfo.marketPresence.forEach(market => {
-    chunks.push({
-      content: cleanText(`
-        Market Aspect: ${market.title}
-        Details: ${Array.isArray(market.details) ? market.details.map(detail => 
-          Array.isArray(detail) ? detail.join('\n') : detail
-        ).join('\n') : market.details}
-      `),
-      metadata: { 
-        type: 'market_presence',
-        aspect: market.title
-      }
-    });
+  // Consolidated Market Presence
+  chunks.push({
+    content: cleanText(`
+      MARKET PRESENCE AND REACH
+
+      ${luminaInfo.marketPresence.map(market => `
+        ${market.title}:
+        ${Array.isArray(market.details) ? 
+          market.details.map(detail => `- ${detail}`).join('\n') 
+          : market.details}
+      `).join('\n\n')}
+    `),
+    metadata: { 
+      type: 'market_presence',
+      sections: ['market', 'presence', 'reach'],
+      keywords: [
+        'market presence',
+        'global reach',
+        'distribution',
+        'availability',
+        'market coverage',
+        ...luminaInfo.marketPresence.map(market => market.title.toLowerCase())
+      ]
+    }
   });
 
   // Warranty and Support Information
@@ -143,8 +197,9 @@ function chunkContent() {
       ${luminaInfo.trainingAndSupport}
     `),
     metadata: { 
-      type: 'support',
-      sections: ['warranty', 'training']
+      type: 'warranty_and_support',
+      sections: ['warranty', 'training'],
+      keywords: ['warranty', 'guarantee', 'support', 'training', 'assistance', 'help']
     }
   });
 
@@ -158,7 +213,8 @@ function chunkContent() {
     `),
     metadata: { 
       type: 'benefits_and_specs',
-      sections: ['benefits', 'technical_specs']
+      sections: ['benefits', 'technical_specs'],
+      keywords: ['benefits', 'advantages', 'technical', 'specifications', 'specs', 'features']
     }
   });
 
@@ -191,7 +247,8 @@ function chunkContent() {
     `),
     metadata: { 
       type: 'contact',
-      sections: ['headquarters', 'communication', 'social_media', 'support']
+      sections: ['headquarters', 'communication', 'social_media', 'support'],
+      keywords: ['contact', 'email', 'phone', 'address', 'social media', 'support', 'business hours', 'headquarters', 'global']
     }
   });
 
@@ -242,39 +299,61 @@ export async function searchRelevantContent(query) {
 
     const { data: matches, error } = await supabase.rpc('match_embeddings', {
       query_embedding: embedding.data[0].embedding,
-      match_threshold: 0.5, // Lowered threshold to include more matches
-      match_count: 70 // Increased to retrieve more content
+      match_threshold: 0.6,
+      match_count: 15
     });
 
     if (error) throw error;
 
-    // Filter and prioritize matches
-    const productMatches = matches.filter(match => 
-      match.metadata && 
-      (match.metadata.type === 'product_comprehensive' || 
-       match.metadata.type === 'product_feature' ||
-       match.metadata.type === 'contact')
-    );
+    if (!matches || matches.length === 0) {
+      return [];
+    }
 
-    // If no product matches, return all matches
-    const finalMatches = productMatches.length > 0 ? productMatches : matches;
+    // Helper function to calculate keyword relevance
+    const calculateKeywordRelevance = (metadata, queryTerms) => {
+      if (!metadata?.keywords) return 0;
+      
+      const keywordMatches = metadata.keywords.filter(keyword =>
+        queryTerms.some(term => keyword.toLowerCase().includes(term))
+      ).length;
+      
+      return keywordMatches / metadata.keywords.length;
+    };
 
-    // Ensure contact information is always included if available
-    const contactMatches = matches.filter(match => 
-      match.metadata && match.metadata.type === 'contact'
-    );
+    const queryTerms = query.toLowerCase().split(/\s+/);
 
-    // Combine matches, prioritizing product and contact information
-    const combinedMatches = [
-      ...productMatches,
-      ...(contactMatches.length > 0 ? contactMatches : [])
-    ];
+    // Process and score matches
+    const scoredMatches = matches.map(match => {
+      const keywordScore = calculateKeywordRelevance(match.metadata, queryTerms);
+      const isProduct = match.metadata?.type === 'product_comprehensive';
+      const isContact = match.metadata?.type === 'contact';
 
-    return combinedMatches.map(match => ({
+      return {
+        ...match,
+        score: (
+          match.similarity * 0.6 +     // 60% weight to embedding similarity
+          keywordScore * 0.4 +         // 40% weight to keyword matching
+          (isProduct ? 0.2 : 0) +      // Boost for product information
+          (isContact ? 0.1 : 0)        // Small boost for contact information
+        )
+      };
+    });
+
+    // Sort by combined score
+    const sortedMatches = scoredMatches.sort((a, b) => b.score - a.score);
+
+    // Remove duplicates and limit results
+    const uniqueMatches = Array.from(new Set(sortedMatches.map(m => m.content)))
+      .map(content => sortedMatches.find(m => m.content === content))
+      .filter(Boolean)
+      .slice(0, 10);
+
+    return uniqueMatches.map(match => ({
       content: match.content,
       similarity: match.similarity,
       metadata: match.metadata
-    })).slice(0, 10); // Limit to top 10 matches
+    }));
+
   } catch (error) {
     console.error('Error in searchRelevantContent:', error);
     throw error;
