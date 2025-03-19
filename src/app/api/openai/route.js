@@ -34,6 +34,9 @@ const systemMessage = {
        • "What is your room size?"
        • "What are your lighting conditions?"
        • "What's your budget range?"
+        Provide tailored suggestions based on responses
+        You can go stepwise to not overwhelm the user
+        Provide suggestions based on your knowledge if user is unsure or ask question for them to understand their needs
 
        Then provide:
        • **Product Name**
