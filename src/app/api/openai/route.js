@@ -63,7 +63,7 @@ export async function POST(req) {
 
     // Use GPT-3.5 to reduce token generation time
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4',
       messages: updatedMessages,
       stream: true,
       temperature: 0.5,  // Lower temperature for more focused responses
