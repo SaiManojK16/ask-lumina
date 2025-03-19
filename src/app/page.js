@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Image from 'next/image';
+import TypingAnimation from '@/components/TypingAnimation';
 
 export default function Home() {
   const [history, setHistory] = useState([])
@@ -119,8 +120,8 @@ export default function Home() {
                 </p>
               </div>
             ) : (
-              messages.length > 0 && (
-                messages.map((message, index) => (
+              <>
+                {messages.map((message, index) => (
                   <div
                     key={index}
                     className={`mb-4 w-full flex ${message.role === 'user' ? "justify-end" : "justify-start"}`}
@@ -132,7 +133,9 @@ export default function Home() {
                           : "border-transparent text-regular-light dark:text-regular-dark w-full"
                       }`}
                     >
-                      {message.role === "assistant" ? (
+                      {loading && message.role === "assistant" && message.content === "" ? (
+                        <TypingAnimation />
+                      ) : message.role === "assistant" ? (
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
                           className="prose dark:prose-invert max-w-none"
@@ -182,8 +185,15 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                ))
-              )
+                ))}
+                {loading && messages[messages.length - 1]?.role === 'user' && (
+                  <div className="flex justify-start w-full">
+                    <div className="relative px-6 py-1.5 rounded-md border-transparent text-regular-light dark:text-regular-dark w-full">
+                      <TypingAnimation />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
