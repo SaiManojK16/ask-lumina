@@ -1,6 +1,8 @@
 import { OpenAI } from 'openai';
 import { supabase } from './supabase.js';
 import { luminaInfo } from '@/data/luminaInfo.js';
+import { faqs } from '@/data/faq.js';
+import { regionalSupport } from '@/data/regionalSupport.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,6 +16,53 @@ function cleanText(text) {
 // Function to chunk content into meaningful sections
 function chunkContent() {
   const chunks = [];
+
+  // Regional Support Information
+  regionalSupport.forEach((person) => {
+    const allRegions = Object.values(person.regions).flat();
+    const allCities = Object.values(person.cities)
+      .flatMap(regionCities => Object.values(regionCities))
+      .flat();
+
+    chunks.push({
+      content: cleanText(`
+        Regional Support Contact
+
+        Name: ${person.name}
+        Designation: ${person.designation}
+        Contact Number: ${person.contact_number}
+        Email: ${person.email}
+
+        Regions Covered:
+        ${Object.entries(person.regions)
+          .map(([region, areas]) => `${region}: ${areas.join(', ')}`)
+          .join('\n')}
+
+        Major Cities:
+        ${Object.entries(person.cities)
+          .map(([region, cityObj]) => 
+            Object.entries(cityObj)
+              .map(([state, cities]) => `${state}: ${cities.join(', ')}`)
+              .join('\n')
+          )
+          .join('\n')}
+      `),
+      metadata: {
+        type: 'regional_support',
+        name: person.name,
+        designation: person.designation,
+        regions: allRegions,
+        cities: allCities,
+        keywords: [
+          'regional support',
+          'contact',
+          person.name.toLowerCase(),
+          ...allRegions.map(r => r.toLowerCase()),
+          ...allCities.map(c => c.toLowerCase())
+        ]
+      }
+    });
+  });
 
   // Complete Product Overview
   chunks.push({
@@ -48,6 +97,22 @@ function chunkContent() {
         ...luminaInfo.products.map(p => p.surface.toLowerCase())
       ]
     }
+  });
+
+  // FAQ Content
+  faqs.forEach((faq, index) => {
+    chunks.push({
+      content: cleanText(`
+        Question: ${faq.question}
+        Answer: ${faq.answer}
+      `),
+      metadata: {
+        type: 'faq',
+        index: index,
+        sections: ['faq', 'questions', 'support'],
+        keywords: faq.question.toLowerCase().split(' ')
+      }
+    });
   });
 
   // Individual Product Information
