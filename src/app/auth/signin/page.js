@@ -3,9 +3,37 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function SignIn() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        window.location.href = '/';
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -42,9 +70,58 @@ export default function SignIn() {
           </div>
         )}
 
+        <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-regular-light dark:text-regular-dark mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-tertiary-light dark:border-tertiary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark bg-primary-light dark:bg-primary-dark text-regular-light dark:text-regular-dark"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-regular-light dark:text-regular-dark mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-tertiary-light dark:border-tertiary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark bg-primary-light dark:bg-primary-dark text-regular-light dark:text-regular-dark"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-accent-light to-accent-dark hover:from-accent-dark hover:to-accent-light text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-tertiary-light dark:border-tertiary-dark"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-primary-light dark:bg-secondary-dark text-muted-light dark:text-muted-dark">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
         <button
           onClick={handleGoogleSignIn}
-          className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-3 border border-gray-300"
+          className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-3 border border-gray-300 mb-6"
         >
           <Image 
             src="https://www.svgrepo.com/show/475656/google-color.svg" 
@@ -55,6 +132,16 @@ export default function SignIn() {
           />
           Sign in with Google
         </button>
+
+        <p className="text-center text-sm text-muted-light dark:text-muted-dark">
+          Don't have an account?{' '}
+          <Link 
+            href="/auth/signup" 
+            className="font-semibold text-accent-light dark:text-accent-dark hover:text-accent-dark dark:hover:text-accent-light"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );
