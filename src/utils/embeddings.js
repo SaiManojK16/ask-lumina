@@ -320,36 +320,264 @@ function chunkContent() {
   return chunks;
 }
 
+// Content types enum for consistency
+const CONTENT_TYPES = {
+  PRODUCT: 'products',
+  FAQ: 'faqs',
+  REGIONAL_SUPPORT: 'regional_support',
+  COMPANY_INFO: 'company_info'
+};
 // Function to create and store embeddings
-export async function createAndStoreEmbeddings() {
+async function fetchDataFromSource(type, ids = null) {
   try {
-    // Clear existing embeddings
-    await supabase
-      .from('lumina_embeddings')
-      .delete()
-      .neq('id', 0); // Delete all records
+    let query = supabase.from(type);
+    
+    // Handle specific queries for different tables
+    switch(type) {
+      case CONTENT_TYPES.PRODUCT:
+        query = query.select(`
+          id,
+          name,
+          gain,
+          material,
+          surface,
+          projection_type,
+          description,
+          product_specs,
+          features,
+          why_choose_this
+        `);
+        break;
 
-    const chunks = chunkContent();
-    console.log(`Created ${chunks.length} chunks of content`);
+      case CONTENT_TYPES.COMPANY_INFO:
+        query = query.select('id, key, content');
+        break;
 
-    for (const chunk of chunks) {
-      const embedding = await openai.embeddings.create({
-        model: "text-embedding-ada-002",
-        input: chunk.content,
-      });
+      case CONTENT_TYPES.FAQ:
+        query = query.select('id, question, answer, category, tags');
+        break;
 
+      case CONTENT_TYPES.REGIONAL_SUPPORT:
+        query = query.select('id, name, designation, contact_number, email, regions, cities');
+        break;
+
+      default:
+        throw new Error(`Unsupported content type: ${type}`);
+    }
+    
+    if (ids) {
+      query = query.in('id', ids);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error(`Error fetching ${type}:`, error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn(`No data found for type: ${type}`);
+      return [];
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Error in fetchDataFromSource for ${type}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Process data into chunks with embeddings-friendly format
+ */
+async function processContentToChunks(data, type) {
+  switch (type) {
+    case CONTENT_TYPES.PRODUCT:
+      return data.flatMap(product => [
+        // Basic info chunk
+        {
+          content: `Product: ${product.name}
+
+          ${product.description}
+
+          Specifications:
+          - Gain: ${product.gain}
+          - Material: ${product.material}
+          - Surface: ${product.surface}
+          - Projection Type: ${product.projection_type || 'Not specified'}`,
+          type: CONTENT_TYPES.PRODUCT,
+          source_id: product.id.toString(),
+          metadata: {
+            name: product.name,
+            specs: {
+              gain: product.gain,
+              material: product.material,
+              surface: product.surface
+            },
+            field: 'basic_info'
+          }
+        },
+        // Product specs chunk
+        ...(product.product_specs ? [{
+          content: `Product Specifications for ${product.name}:\n${product.product_specs.join('\n')}`,
+          type: CONTENT_TYPES.PRODUCT,
+          source_id: product.id.toString(),
+          metadata: {
+            name: product.name,
+            field: 'product_specs'
+          }
+        }] : []),
+        // Features chunk
+        ...(product.features ? [{
+          content: `Features of ${product.name}:\n${product.features.map(f => `${f.title}: ${f.details}`).join('\n')}`,
+          type: CONTENT_TYPES.PRODUCT,
+          source_id: product.id.toString(),
+          metadata: {
+            name: product.name,
+            field: 'features'
+          }
+        }] : []),
+        // Why choose this chunk
+        ...(product.why_choose_this ? [{
+          content: `Why Choose ${product.name}:\n${product.why_choose_this.join('\n')}`,
+          type: CONTENT_TYPES.PRODUCT,
+          source_id: product.id.toString(),
+          metadata: {
+            name: product.name,
+            field: 'why_choose_this'
+          }
+        }] : [])
+      ]);
+
+    case CONTENT_TYPES.FAQ:
+      return data.map(faq => ({
+        content: `Q: ${faq.question}\nA: ${faq.answer}${faq.category ? `\nCategory: ${faq.category}` : ''}${faq.tags ? `\nTags: ${faq.tags.join(', ')}` : ''}`,
+        type: CONTENT_TYPES.FAQ,
+          source_id: faq.id.toString(),
+          metadata: {
+            category: faq.category,
+            tags: faq.tags
+          }
+      }));
+
+    case CONTENT_TYPES.REGIONAL_SUPPORT:
+      return data.map(person => ({
+        content: `${person.name} - ${person.designation}\nContact: ${person.contact_number}\nEmail: ${person.email}\n\nRegions: ${JSON.stringify(person.regions)}\nCities: ${JSON.stringify(person.cities)}`,
+        type: CONTENT_TYPES.REGIONAL_SUPPORT,
+          source_id: person.id.toString(),
+          metadata: {
+            name: person.name,
+            designation: person.designation,
+            regions: person.regions,
+            cities: person.cities
+          }
+      }));
+
+    case CONTENT_TYPES.COMPANY_INFO:
+      return data.map(info => ({
+        content: info.content,
+        type: CONTENT_TYPES.COMPANY_INFO,
+          source_id: info.id.toString(),
+          metadata: {
+            key: info.key
+          }
+      }));
+
+    default:
+      throw new Error(`Unsupported content type: ${type}`);
+  }
+}
+
+export async function createAndStoreEmbeddings({ type, ids = null, rebuild = false }) {
+  try {
+    const BATCH_SIZE = 100;
+    const MODEL_VERSION = 'ada-002-v1';
+    
+    // If rebuilding, delete existing embeddings for the type
+    if (rebuild) {
       await supabase
         .from('lumina_embeddings')
-        .insert({
+        .delete()
+        .eq('type', type);
+    } else if (ids) {
+      // Delete specific embeddings that need updating
+      await supabase
+        .from('lumina_embeddings')
+        .delete()
+        .eq('type', type)
+        .in('source_id', ids.map(id => id.toString()));
+    }
+
+    // Fetch data from source table
+    const sourceData = await fetchDataFromSource(type, ids);
+    console.log(`Fetched ${sourceData.length} records from ${type}`);
+    
+    const chunks = await processContentToChunks(sourceData, type);
+    console.log('Sample chunk:', chunks[0]);
+    
+    console.log(`Processing ${chunks.length} chunks for ${type}`);
+
+    // Process in batches
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(async (chunk) => {
+        const embedding = await openai.embeddings.create({
+          model: "text-embedding-ada-002",
+          input: chunk.content,
+        });
+
+        return {
           content: chunk.content,
           embedding: embedding.data[0].embedding,
-          metadata: chunk.metadata
-        });
+          type: chunk.type,
+          source_id: chunk.source_id,
+          metadata: {
+            ...chunk.metadata,
+            model_version: MODEL_VERSION,
+            created_at: new Date().toISOString(),
+            token_count: chunk.content.split(' ').length
+          }
+        };
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      // Transform batch results to include type as a top-level column
+      // No need to transform since we already have the correct structure
+      const transformedResults = batchResults;
+
+      console.log('Inserting batch with sample:', transformedResults[0]);
+      const { data, error } = await supabase.from('lumina_embeddings').insert(transformedResults);
+      if (error) {
+        console.error('Error inserting embeddings:', error);
+        throw error;
+      }
+      console.log('Successfully inserted batch');
+      
+      console.log(`Processed batch ${i / BATCH_SIZE + 1} of ${Math.ceil(chunks.length / BATCH_SIZE)}`);
     }
 
     console.log('Successfully stored all embeddings');
   } catch (error) {
     console.error('Error in createAndStoreEmbeddings:', error);
+    throw error;
+  }
+}
+
+export async function deleteEmbeddings({ type, ids }) {
+  try {
+    const query = supabase.from('lumina_embeddings').delete().eq('metadata->>type', type);
+    
+    if (ids) {
+      query.in('metadata->>id', ids);
+    }
+    
+    const { error } = await query;
+    if (error) throw error;
+    
+    console.log(`Successfully deleted embeddings for ${type}${ids ? ` with ids: ${ids.join(', ')}` : ''}`);
+  } catch (error) {
+    console.error('Error in deleteEmbeddings:', error);
     throw error;
   }
 }
