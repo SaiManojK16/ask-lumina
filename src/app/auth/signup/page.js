@@ -28,7 +28,24 @@ export default function SignUp() {
     setError('');
 
     try {
-      // Sign up with Supabase
+      // Check if user exists using admin API
+      const response = await fetch('/api/check-user-exists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+      
+      if (data.exists) {
+        setError('An account with this email already exists. Please sign in instead.');
+        setIsLoading(false);
+        return;
+      }
+
+      // If we get here, the user doesn't exist, so try to sign up
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -36,7 +53,8 @@ export default function SignUp() {
           data: {
             full_name: `${firstName} ${lastName}`.trim(),
             first_name: firstName,
-            last_name: lastName
+            last_name: lastName,
+
           },
           emailRedirectTo: `${window.location.origin}/auth/signin`
         }
@@ -47,7 +65,9 @@ export default function SignUp() {
       // Show verification message
       setVerificationSent(true);
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Something went wrong. Please try again.');
+      setIsLoading(false);
+      return;
     } finally {
       setIsLoading(false);
     }
