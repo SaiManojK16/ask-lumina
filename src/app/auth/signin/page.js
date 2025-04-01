@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function SignIn() {
+  const supabase = createClientComponentClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -37,14 +39,72 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signIn('google', {
-        callbackUrl: '/',
+      setIsLoading(true);
+      setError('');
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account',
+          }
+        }
       });
+
+      if (error) {
+        console.error('Google sign-in error:', error);
+        setError(error.message);
+        return;
+      }
+
+      if (!data?.url) {
+        setError('Failed to get authorization URL');
+        return;
+      }
+
+      // Save the current timestamp to detect successful callback
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('googleSignInStarted', Date.now().toString());
+      }
+      
+      // Redirect to Google's authorization page
+      window.location.href = data.url;
     } catch (error) {
       console.error('Error:', error);
-      setError(error.message);
+      setError(error.message || 'Failed to initiate Google sign-in');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check for error parameter in URL
+    const params = new URLSearchParams(window.location.search);
+    const errorMsg = params.get('error');
+    if (errorMsg) {
+      setError(decodeURIComponent(errorMsg));
+      return;
+    }
+
+    // Check if we're returning from a Google sign-in attempt
+    const startTime = sessionStorage.getItem('googleSignInStarted');
+    if (startTime) {
+      sessionStorage.removeItem('googleSignInStarted');
+      
+      // Check the current session
+      const checkSession = async () => {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session) {
+          window.location.href = '/';
+        } else if (error) {
+          setError('Failed to establish session');
+        }
+      };
+      
+      checkSession();
+    }
+  }, [supabase.auth]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent-light to-accent-dark dark:from-primary-dark dark:to-secondary-dark">
