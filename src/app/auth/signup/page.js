@@ -99,7 +99,7 @@ export default function SignUp() {
         {verificationSent ? (
           <div className="text-center space-y-4">
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              <p>We've sent a verification link to <strong>{email}</strong></p>
+              <p>We&apos;ve sent a verification link to <strong>{email}</strong></p>
               <p className="mt-2">Please check your email and click the link to verify your account.</p>
             </div>
             <p className="text-sm text-muted-light dark:text-muted-dark mt-4">
