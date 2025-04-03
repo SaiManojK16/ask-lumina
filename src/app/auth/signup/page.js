@@ -4,14 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function SignUp() {
+  const supabase = createClientComponentClient();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,46 +23,33 @@ export default function SignUp() {
     setError('');
 
     try {
-      // Check if user exists using admin API
-      const response = await fetch('/api/check-user-exists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-      
-      if (data.exists) {
-        setError('An account with this email already exists. Please sign in instead.');
-        setIsLoading(false);
-        return;
-      }
-
-      // If we get here, the user doesn't exist, so try to sign up
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: `${firstName} ${lastName}`.trim(),
             first_name: firstName,
             last_name: lastName,
-
+            full_name: `${firstName} ${lastName}`.trim()
           },
-          emailRedirectTo: `${window.location.origin}/auth/signin`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
-      if (signUpError) throw signUpError;
-
-      // Show verification message
-      setVerificationSent(true);
+      if (error) {
+        // Check for specific error messages
+        if (error.message?.toLowerCase().includes('already registered') || 
+            error.message?.toLowerCase().includes('already taken')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else {
+          setError(error.message || 'An error occurred during signup');
+        }
+      } else if (data?.user) {
+        setVerificationSent(true);
+      }
     } catch (error) {
-      setError(error.message || 'Something went wrong. Please try again.');
-      setIsLoading(false);
-      return;
+      console.error('Sign up error:', error);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -97,21 +80,40 @@ export default function SignUp() {
         )}
 
         {verificationSent ? (
-          <div className="text-center space-y-4">
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              <p>We&apos;ve sent a verification link to <strong>{email}</strong></p>
-              <p className="mt-2">Please check your email and click the link to verify your account.</p>
+          <div className="text-center max-w-xl mx-auto">
+            <div className="mb-8">
+              <svg className="w-12 h-12 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h2 className="text-2xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Almost there!</h2>
+              <p className="text-gray-600 dark:text-gray-400">Please check your email</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium mt-1">{email}</p>
             </div>
-            <p className="text-sm text-muted-light dark:text-muted-dark mt-4">
-              After verifying your email, you can{' '}
-              <Link 
-                href="/auth/signin" 
-                className="font-semibold text-accent-light dark:text-accent-dark hover:text-accent-dark dark:hover:text-accent-light"
-              >
-                sign in
-              </Link>
-              {' '}to your account.
-            </p>
+
+            <div className="space-y-6 w-full">
+              <div className="text-left bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Next steps:</p>
+                <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-2 ml-4 list-decimal">
+                  <li>Click the verification link in your email</li>
+                  <li>Once verified, <Link href="/auth/signin" className="inline-flex items-center text-accent-light hover:text-accent-dark dark:text-accent-dark dark:hover:text-accent-light font-medium">sign in to your account <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg></Link></li>
+                </ol>
+              </div>
+
+              <div className="text-left bg-amber-50 dark:bg-amber-900/20 rounded-lg p-6 border border-amber-200 dark:border-amber-800">
+                <div className="text-sm text-amber-800 dark:text-amber-200 flex items-center justify-between gap-6">
+                  <span>No email? You might already have an account</span>
+                  <Link 
+                    href="/auth/signin" 
+                    className="shrink-0 inline-flex items-center px-4 py-2 rounded-md bg-accent-light hover:bg-accent-dark text-white font-medium transition-colors"
+                  >
+                    Sign in now
+                    <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
