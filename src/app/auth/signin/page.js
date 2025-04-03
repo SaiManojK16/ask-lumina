@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
+
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,14 +19,13 @@ export default function SignIn() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        redirect: false,
+        password
       });
 
-      if (result?.error) {
-        setError(result.error);
+      if (error) {
+        setError(error.message);
       } else {
         window.location.href = '/';
       }
@@ -61,11 +60,6 @@ export default function SignIn() {
       if (!data?.url) {
         setError('Failed to get authorization URL');
         return;
-      }
-
-      // Save the current timestamp to detect successful callback
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('googleSignInStarted', Date.now().toString());
       }
       
       // Redirect to Google's authorization page

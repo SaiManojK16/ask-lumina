@@ -1,59 +1,62 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { signOut, useSession } from 'next-auth/react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 
 export default function ProfileDropdown() {
-  const { data: session } = useSession();
+  const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
+    async function getSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+    }
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [supabase]);
+
+  useEffect(() => {
     const getProfile = async () => {
-      // First check NextAuth session
       if (session?.user) {
-        setUserProfile({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.name,
-          avatar_url: session.user.image,
-        });
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error('Error fetching user:', error);
+          return;
+        }
+
+        const identityData = user.identities?.[0]?.identity_data;
+        const profile = {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.full_name || identityData?.full_name || identityData?.name || user.email,
+          avatar_url: user.user_metadata?.avatar_url || identityData?.avatar_url || identityData?.picture,
+        };
+
+        console.log('User profile:', profile); // Debug log
+        setUserProfile(profile);
         return;
       }
 
-      // Then check Supabase cookie
-      const profileCookie = document.cookie.split('; ')
-        .find(row => row.startsWith('user-profile='));
-      
-      if (profileCookie) {
-        try {
-          const profile = JSON.parse(decodeURIComponent(profileCookie.split('=')[1]));
-          setUserProfile(profile);
-          return;
-        } catch (error) {
-          console.error('Error parsing profile cookie:', error);
-        }
-      }
-
-      // Finally check Supabase session
-      const { data: { session: supaSession }, error } = await supabase.auth.getSession();
-      if (supaSession?.user) {
-        const profile = {
-          id: supaSession.user.id,
-          email: supaSession.user.email,
-          name: supaSession.user.user_metadata?.full_name || supaSession.user.email,
-          avatar_url: supaSession.user.user_metadata?.avatar_url,
-        };
-        setUserProfile(profile);
-      }
+      // If no session, clear the profile
+      setUserProfile(null);
+      return;
     };
 
     getProfile();
-  }, [session, supabase.auth]);
+  }, [session, supabase]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -105,12 +108,8 @@ export default function ProfileDropdown() {
           <div className="border-t border-gray-100 dark:border-gray-700">
             <button
               onClick={async () => {
-                if (session) {
-                  await signOut({ callbackUrl: '/auth/signin' });
-                } else {
-                  await supabase.auth.signOut();
-                  window.location.href = '/auth/signin';
-                }
+                await supabase.auth.signOut();
+                window.location.href = '/auth/signin';
               }}
               className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
