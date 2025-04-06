@@ -27,10 +27,10 @@ export default function Home() {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
-  const handleQuery = async () => {
-    if (!input.trim()) return;
+  const handleQuery = async (bubble) => {
+    if (!input.trim() && !bubble) return;
 
-    const userMessage = { role: "user", content: input };
+    const userMessage = { role: "user", content: bubble || input };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -106,100 +106,118 @@ export default function Home() {
         <Header sidebar={sidebar} toggleSidebar={toggleSidebar} handleNewChat={handleNewChat} isDarkMode={isDarkMode} toggleTheme={toggleTheme}/>
         <main className="mt-5 flex-1 flex justify-center overflow-y-auto space-y-4">
           <div className="w-full md:w-11/12 lg:w-3/4">
-            {messages.length === 0 ? (
-              <div className="flex flex-col justify-center items-center h-full gap-6">
-                  <Image
-                    src="/images/theatre.jpg" 
-                    alt="Home Theatre Icon"
-                    width={250}
-                    height={250}
-                    priority 
-                  />
-                <p className="text-regular-light dark:text-regular-dark text-center text-xl font-semibold">
-                  Start your home theatre experience now!
-                </p>
-              </div>
-            ) : (
-              <>
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`mb-4 w-full flex ${message.role === 'user' ? "justify-end" : "justify-start"}`}
-                  >
+              {messages.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-full gap-6">
+                    <Image
+                      src="/images/theatre.jpg" 
+                      alt="Home Theatre Icon"
+                      width={250}
+                      height={250}
+                      priority 
+                    />
+                  <p className="text-regular-light dark:text-regular-dark text-center text-xl font-semibold">
+                    Start your home theatre experience now!
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {messages.map((message, index) => (
                     <div
-                      className={`relative px-6 py-1.5 rounded-md border-t border-l border-b overflow-hidden ${
-                        message.role === 'user'
-                          ? "border-tertiary-light mr-4 max-w-[80%] dark:border-tertiary-dark text-regular-light dark:text-regular-dark"
-                          : "border-transparent text-regular-light dark:text-regular-dark w-full"
-                      }`}
+                      key={index}
+                      className={`mb-4 w-full flex ${message.role === 'user' ? "justify-end" : "justify-start"}`}
                     >
-                      {loading && message.role === "assistant" && message.content === "" ? (
-                        <TypingAnimation />
-                      ) : message.role === "assistant" ? (
-                        <ReactMarkdown 
-                          remarkPlugins={[remarkGfm]}
-                          className="prose dark:prose-invert max-w-none"
-                          components={{
-                            a: ({ node, ...props }) => (
-                              <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600" />
-                            ),
-                            p: ({ node, ...props }) => (
-                              <p {...props} className="mb-4 last:mb-0" />
-                            ),
-                            ul: ({ node, ...props }) => (
-                              <ul {...props} className="list-disc pl-4 mb-4" />
-                            ),
-                            ol: ({ node, ...props }) => (
-                              <ol {...props} className="list-decimal pl-4 mb-4" />
-                            ),
-                            li: ({ node, ...props }) => (
-                              <li {...props} className="mb-1" />
-                            ),
-                            strong: ({ node, ...props }) => (
-                              <strong {...props} className="font-bold" />
-                            ),
-                            h1: ({ node, ...props }) => (
-                              <h1 {...props} className="text-2xl font-bold mb-4" />
-                            ),
-                            h2: ({ node, ...props }) => (
-                              <h2 {...props} className="text-xl font-bold mb-3" />
-                            ),
-                            h3: ({ node, ...props }) => (
-                              <h3 {...props} className="text-lg font-bold mb-2" />
-                            ),
-                            code: ({ node, ...props }) => (
-                              <code {...props} className="bg-gray-100 dark:bg-gray-800 rounded px-1" />
-                            ),
-                            pre: ({ node, ...props }) => (
-                              <pre {...props} className="bg-gray-100 dark:bg-gray-800 rounded p-4 overflow-x-auto mb-4" />
-                            )
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      ) : (
-                        <p>{message.content}</p>
-                      )}
-                      {message.role === 'user' && (
-                        <div className="absolute top-0 right-0 h-full w-1 bg-gradient-to-b from-accent-light to-accent-dark rounded-r-md" />
-                      )}
+                      <div
+                        className={`relative px-6 py-1.5 rounded-md border-t border-l border-b overflow-hidden ${
+                          message.role === 'user'
+                            ? "border-tertiary-light mr-4 max-w-[80%] dark:border-tertiary-dark text-regular-light dark:text-regular-dark"
+                            : "border-transparent text-regular-light dark:text-regular-dark w-full"
+                        }`}
+                      >
+                        {loading && message.role === "assistant" && message.content === "" ? (
+                          <TypingAnimation />
+                        ) : message.role === "assistant" ? (
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            className="prose dark:prose-invert max-w-none"
+                            components={{
+                              a: ({ node, ...props }) => (
+                                <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600" />
+                              ),
+                              p: ({ node, ...props }) => (
+                                <p {...props} className="mb-4 last:mb-0" />
+                              ),
+                              ul: ({ node, ...props }) => (
+                                <ul {...props} className="list-disc pl-4 mb-4" />
+                              ),
+                              ol: ({ node, ...props }) => (
+                                <ol {...props} className="list-decimal pl-4 mb-4" />
+                              ),
+                              li: ({ node, ...props }) => (
+                                <li {...props} className="mb-1" />
+                              ),
+                              strong: ({ node, ...props }) => (
+                                <strong {...props} className="font-bold" />
+                              ),
+                              h1: ({ node, ...props }) => (
+                                <h1 {...props} className="text-2xl font-bold mb-4" />
+                              ),
+                              h2: ({ node, ...props }) => (
+                                <h2 {...props} className="text-xl font-bold mb-3" />
+                              ),
+                              h3: ({ node, ...props }) => (
+                                <h3 {...props} className="text-lg font-bold mb-2" />
+                              ),
+                              code: ({ node, ...props }) => (
+                                <code {...props} className="bg-gray-100 dark:bg-gray-800 rounded px-1" />
+                              ),
+                              pre: ({ node, ...props }) => (
+                                <pre {...props} className="bg-gray-100 dark:bg-gray-800 rounded p-4 overflow-x-auto mb-4" />
+                              )
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        ) : (
+                          <p>{message.content}</p>
+                        )}
+                        {message.role === 'user' && (
+                          <div className="absolute top-0 right-0 h-full w-1 bg-gradient-to-b from-accent-light to-accent-dark rounded-r-md" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {loading && messages[messages.length - 1]?.role === 'user' && (
+                  ))}
+                  {loading && messages[messages.length - 1]?.role === 'user' && (
                   <div className="flex justify-start w-full">
                     <div className="relative px-6 py-1.5 rounded-md border-transparent text-regular-light dark:text-regular-dark w-full">
                       <TypingAnimation />
                     </div>
                   </div>
-                )}
+              )}
               </>
-            )}
+              )}
             <div ref={messagesEndRef} />
           </div>
         </main>
+        <div className="flex justify-center w-full mt-6">
+          <div className="w-11/12 lg:w-3/4 flex flex-wrap justify-center gap-4 mb-4">
+            {[
+              { text: "Product Recommendations" },
+              { text: "Technical Assistance" },
+              { text: "Regional Support" },
+              { text: "FAQs" },
 
-        <footer className="flex justify-center items-center my-6">
+            ].map((option, index) => (
+              <button
+                key={index}
+                onClick={() => handleQuery(option.text)}
+                className="px-4 py-2 bg-tertiary-light dark:bg-tertiary-dark rounded-lg text-sm text-regular-light dark:text-regular-dark hover:opacity-80 transition-opacity"
+              >
+                {option.text}
+              </button>
+            ))}
+          </div>
+        </div>
+          <footer className="flex justify-center items-center mb-6">
           <div className="w-11/12 lg:w-3/4 p-2 bg-tertiary-light dark:bg-tertiary-dark rounded-lg flex flex-col justify-center items-end">
           <textarea
             className="w-full p-2  bg-transparent text-regular-light dark:text-regular-dark focus:outline-none resize-none"
