@@ -1,91 +1,87 @@
 export const regionalSupport = [
     {
-        "name": "Harshal Chheda",
-        "designation": "International Business Manager",
-        "contact_number": "91 98765 43210",
-        "email": "harshal.chheda@luminascreens.com",
-        "regions": {
-            "international": ["All Countries (Except India)"]
-        },
-        "cities": {
-            "international": {
-                "Global": ["All International Locations"]
-            }
-        }
+      "name": "Abhishek R Badave",
+      "designation": "Business Development Executive",
+      "contactNumber": "91 77188 80150",
+      "email": "abhishek.badave@luminascreens.com",
+      "regions": [
+        "West India",
+        "South 1 India"
+      ],
+      "states": [
+        "Maharashtra", "Madhya Pradesh", "Gujrat", "Rajasthan", "Chhattisgarh",
+        "Karnataka", "Andhra Pradesh", "Telangana"
+      ],
+      "cities": [
+        "Mumbai", "Indore", "Ahmedabad", "Jaipur", "Raipur", "Bengaluru", "Visakhapatnam", "Hyderabad",
+        "Pune", "Bhopal", "Surat", "Jodhpur", "Bhilai", "Mysuru", "Vijayawada", "Warangal",
+        "Nagpur", "Jabalpur", "Vadodara", "Udaipur", "Durg", "Hubballi-Dharwad", "Guntur", "Nizamabad",
+        "Nashik", "Gwalior", "Rajkot", "Kota", "Bilaspur", "Mangaluru", "Tirupati", "Karimnagar",
+        "Aurangabad", "Ujjain", "Gandhinagar", "Bikaner", "Korba", "Belagavi", "Kurnool", "Khammam",
+        "Thane", "Sagar", "Bhavnagar", "Ajmer", "Rajnandgaon", "Shivamogga", "Nellore", "Mahbubnagar",
+        "Navi Mumbai", "Satna", "Jamnagar", "Alwar", "Jagdalpur", "Kalaburagi /Gulbarga", "Rajamahendravaram /Rajahmundry", "Ramagundam",
+        "Kalyan-Dombivli", "Rewa", "Junagadh", "Bharatpur", "Raigarh", "Davanagere", "Kadapa", "Suryapet",
+        "Vasai-Virar", "Dewas", "Anand", "Sikar", "Ambikapur", "Tumakuru", "Kakinada", "Miryalaguda",
+        "Solapur", "Ratlam", "Bharuch", "Bhilwara", "Dhamtari", "Ballari", "Anantapur", "Siddipet",
+        "Amravati", "Singrauli", "Nadiad", "Pali", "Mahasamund", "Vijayapura /Bijapur", "Chittoor", "Adilabad",
+        "Kolhapur", "Burhanpur", "Mehsana", "Chittorgarh", "Kanker", "Raichur", "Eluru", "Nalgonda",
+        "Sangli", "Khandwa", "Valsad", "Jhunjhunu", "Janjgir", "Bidar", "Ongole", "Jagtial",
+        "Jalgaon", "Chhindwara", "Navsari", "Sri Ganganagar", "Dantewada", "Chitradurga", "Machilipatnam", "Mancherial",
+        "Akola", "Morena", "Morbi", "Hanumangarh", "Kawardha", "Udupi", "Srikakulam", "Kamareddy",
+        "Latur", "Bhind", "Surendranagar", "Tonk", "Mungeli", "Hassan", "Vizianagaram", "Bhadradri Kothagudem",
+        "Ahmednagar", "Betul", "Gandhidham", "Sawai Madhopur", "Sukma", "Kolar", "Bhimavaram", "Wanaparthy",
+        "Dhule", "Sehore", "Veraval", "Nagaur", "Baloda Bazar", "Bagalkot", "Hindupur", "Medak",
+        "Chandrapur", "Hoshangabad /Narmadapuram", "Porbandar", "Barmer", "Kondagaon", "Mandya", "Tenali", "Nagarkurnool",
+        "Nanded", "Vidisha", "Palanpur", "Jaisalmer", "Surajpur", "Chikkamagaluru", "Nandyal", "Vikarabad",
+        "Satara", "Shivpuri", "Dahod", "Churu", "Bijapur", "Haveri", "Proddatur", "Tandur",
+        "Ratnagiri", "Mandsaur", "Godhra", "Dholpur", "Jashpur", "Koppal", "Tadipatri", "Zaheerabad",
+        "Alibag", "Neemuch", "Amreli", "Dausa", "Bemetara", "Ramanagara", "Amalapuram", "Sangareddy",
+        "Karad", "Seoni", "Botad", "Bundi", "Gariaband", "Yadgir", "Narasaraopet", "Banswada",
+        "Beed", "Damoh", "Patan", "Rajsamand", "Narayanpur", "Gadag", "Tadepalligudem", "Gadwal",
+        "Parbhani", "Chhatarpur", "Bhuj", "Banswara", "Chamarajanagar", "Chirala", "Bellampalli",
+        "Wardha", "Shahdol", "Himmatnagar", "Jhalawar", "Kodagu /Madikeri", "Markapur",
+        "Jalna", "Katni", "Dwarka", "Karauli", "Karwar", "Madanapalle",
+        "Bhiwandi", "Harda", "Modasa", "Sirohi", "Sirsi", "Gudivada",
+        "Baramati", "Raisen", "Mahesana", "Pratapgarh", "Dandeli", "Adoni",
+        "Gondia", "Mandla", "Chhota Udepur",
+        "Yavatmal", "Sidhi", "Kheda",
+        "Malegaon", "Panna", "Vyara",
+        "Hingoli", "Ashoknagar", "Lunavada",
+        "Osmanabad", "Guna", "Dhoraji",
+        "Panvel", "Miraj", "Ichalkaranji", "Ulhasnagar", "Ambernath"
+      ]
     },
     {
-        "name": "Abhishek R Badave",
-        "designation": "Business Development Executive",
-        "contact_number": "91 77188 80150",
-        "email": "abhishek.badave@luminascreens.com",
-        "regions": {
-          "west_india": ["Maharashtra", "Madhya Pradesh", "Gujrat", "Rajasthan", "Chhattisgarh"],
-          "south_1_india": ["Karnataka", "Andhra Pradesh", "Telangana"]
-        },
-        "cities": {
-          "west_india": {
-            "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad", "Thane", "Navi Mumbai", "Kalyan-Dombivli", "Vasai-Virar", "Solapur", "Amravati", "Kolhapur", "Ahmednagar", "Dhule", "Satara", "Ratnagiri", "Alibag", "Beed"],
-            "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Satna", "Singrauli", "Betul", "Harda", "Ashoknagar"],
-            "Gujrat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Valsad", "Bhavnagar", "Jamnagar", "Junagadh", "Nadiad", "Mehsana", "Gandhinagar", "Bharuch", "Bharatpur", "Sikar", "Rajsamand", "Morbi", "Porbandar", "Dahod"],
-            "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Ajmer", "Bikaner", "Kota", "Alwar", "Pali", "Chittorgarh", "Churu", "Sawai Madhopur", "Dholpur", "Jaisalmer", "Surajpur"],
-            "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Durg", "Korba", "Raigarh", "Dhamtari", "Chandrapur"]
-          },
-          "south_1_india": {
-            "Karnataka": ["Bengaluru", "Mysuru", "Hubballi-Dharwad", "Mangaluru", "Belagavi", "Hassan", "Bagalkot", "Udupi", "Raichur", "Chikkamagaluru", "Bidar", "Gadag", "Karwar", "Bagalkot"],
-            "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Warangal", "Tirupati", "Nellore", "Kadapa", "Suryapet", "Chittoor", "Anantapur", "Tandur", "Proddatur", "Srikakulam", "Vizianagaram"],
-            "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam", "Nalgonda", "Adilabad", "Mahbubnagar", "Ramagundam", "Miryalaguda", "Siddipet", "Jagtial", "Mancherial", "Zaheerabad"]
-          }
-        }
+      "name": "Nealon N D'Cruz",
+      "designation": "Business Development Executive",
+      "contact_number": "91 90048 48817",
+      "email_id": "nealon.dcruz@luminascreens.com",
+      "regions": ["South 2 India", "North & East India"],
+      "states": [
+        "Kerala", "Tamil Nadu", "Uttar Pradesh", "Bihar", "West Bengal", "Jharkhand", "Odisha", "Punjab",
+        "Haryana", "Himachal Pradesh", "Uttarakhand", "Delhi", "Sikkim", "Assam", "Meghalaya", "Manipur",
+        "Mizoram", "Nagaland", "Arunachal Pradesh", "Tripura"
+      ],
+      "cities": [
+        "Thiruvananthapuram", "Chennai", "Lucknow", "Patna", "Kolkata", "Ranchi", "Bhubaneswar", "Amritsar", "Gurgaon",
+        "Shimla", "Dehradun", "New Delhi", "Gangtok", "Guwahati", "Shillong", "Imphal", "Aizawl", "Kohima", "Itanagar", "Agartala",
+        "Kochi", "Coimbatore", "Kanpur", "Gaya", "Howrah", "Jamshedpur", "Cuttack", "Ludhiana", "Faridabad", "Mandi",
+        "Haridwar", "Central Delhi", "Namchi", "Dibrugarh", "Tura", "Thoubal", "Lunglei", "Dimapur", "Naharlagun", "Udaipur",
+        "Kozhikode", "Madurai", "Varanasi", "Muzaffarpur", "Durgapur", "Dhanbad", "Rourkela", "Jalandhar", "Panipat", "Dharamshala",
+        "Rishikesh", "South Delhi", "Gyalshing", "Silchar", "Jowai", "Bishnupur", "Champhai", "Mokokchung", "Tawang", "Dharmanagar",
+        "Thrissur", "Tiruchirappalli", "Agra", "Bhagalpur", "Siliguri", "Bokaro", "Sambalpur", "Patiala", "Hisar", "Solan",
+        "Nainital", "Rohini", "Mangan", "Jorhat", "Nongpoh", "Churachandpur", "Serchhip", "Tuensang", "Pasighat", "Kailashahar",
+        "Kollam", "Salem", "Prayagraj", "Darbhanga", "Asansol", "Hazaribagh", "Berhampur", "Bathinda", "Karnal", "Kullu",
+        "Haldwani", "Dwarka", "Tezpur", "Noida", "Ghaziabad"
+      ]
     },
     {
-        "name": "Nealon N D'Cruz",
-        "designation": "Business Development Executive",
-        "contact_number": "91 90048 48817",
-        "email": "nealon.dcruz@luminascreens.com",
-        "regions": {
-          "south_2_india": ["Kerala", "Tamil Nadu"],
-          "north_east_india": ["Uttar Pradesh", "Bihar", "West Bengal", "Jharkhand", "Odisha", "Punjab", "Haryana", "Himachal Pradesh", "Uttarakhand", "Delhi", "Sikkim", "Assam", "Meghalaya", "Manipur", "Mizoram", "Nagaland", "Arunachal Pradesh", "Tripura"]
-        },
-        "cities": {
-          "south_2_india": {
-            "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
-            "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem", "Tiruchirappalli"]
-          },
-          "north_east_india": {
-            "Uttar Pradesh": ["Lucknow", "Kanpur", "Agra", "Prayagraj", "Varanasi"],
-            "Bihar": ["Patna", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Gaya"],
-            "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Asansol", "Durgapur"],
-            "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Hazaribagh", "Bokaro"],
-            "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Sambalpur", "Berhampur"],
-            "Punjab": ["Amritsar", "Ludhiana", "Jalandhar", "Bathinda", "Patiala"],
-            "Haryana": ["Gurgaon", "Faridabad", "Panipat", "Hisar", "Karnal"],
-            "Himachal Pradesh": ["Shimla", "Dharamshala", "Kullu"],
-            "Uttarakhand": ["Dehradun", "Haridwar", "Rishikesh", "Nainital"],
-            "Delhi": ["New Delhi", "Central Delhi", "South Delhi", "Rohini"],
-            "Sikkim": ["Gangtok", "Namchi", "Mangan"],
-            "Assam": ["Guwahati", "Dibrugarh", "Jorhat"],
-            "Meghalaya": ["Shillong", "Jowai"],
-            "Manipur": ["Imphal", "Churachandpur"],
-            "Mizoram": ["Aizawl", "Serchhip"],
-            "Nagaland": ["Kohima", "Dimapur", "Mokokchung"],
-            "Arunachal Pradesh": ["Itanagar", "Tawang", "Pasighat", "Kailashahar"],
-            "Tripura": ["Agartala", "Dharmanagar", "Udaipur"],
-            "Other": ["Tezpur", "Noida", "Ghaziabad"]
-          }
-        }
-      },
-      {
-        "name": "Harshal H Jadhav",
-        "designation": "BD & Marketing Executive",
-        "contact_number": "91 91366 18530",
-        "email": "Support@luminascreens.com",
-        "regions": {
-            "international": ["All Countries, Enquiries from any country other than India should be escalated to Harshal."]
-        },
-        "cities": {
-            "international": {
-                "Global": ["All International Locations"]
-            }
-        }
-      }     
+      "name": "Harshal H Jadhav",
+      "designation": "BD & Marketing Executive", 
+      "contact_number": "91 91366 18530",
+      "email": "support@luminascreens.com",
+      "regions": ["International"],
+      "states": ["All Countries"],
+      "cities": ["All International Locations"]
+    }
 ]

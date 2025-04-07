@@ -39,10 +39,12 @@ const systemMessage = {
           c) Learn about other options
 
     2. Regional Support / Sales Contact:
-       • Must get city / region location before providing contact details
-       • DO NOT provide contact details until asking the city / region location
-       • Show ONLY the contact person for that specific area
-       Format:
+       CRITICAL: For ANY regional support or sales query:
+       1. FIRST ASK: "Which city or region are you located in?" 
+       2. DO NOT proceed with ANY contact details until user provides location
+       3. After getting location, show ONLY the contact person for that specific area
+       
+       Format for contact details (ONLY after getting location):
        • Name: **[name]**
        • Region: [areas covered]
        • Designation: [designation]
@@ -95,14 +97,36 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
     
-    // Get full conversation context from user messages
-    const userMessages = messages
-      .filter(msg => msg.role === 'user')
-      .map(msg => msg.content)
-      .join(' ');
+    // Get user messages
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    
+    // Get current query
+    const currentQuery = userMessages[userMessages.length - 1].content;
+    
+    // Process previous messages with weights
+    const previousMessages = userMessages.slice(0, -1).map((msg, index, arr) => {
+      const position = arr.length - index; // Position from end (1 is oldest)
+      const isQuestion = /\?$/.test(msg.content.trim()); // Check if it's a question
+      const hasKeywords = /screen|gain|material|surface|projection|contact|support|region|city/i.test(msg.content);
+      
+      return {
+        content: msg.content,
+        weight: (
+          (position <= 3 ? 0.8 : 0.4) + // Recent messages get higher weight
+          (isQuestion ? 0.3 : 0) +        // Questions are important
+          (hasKeywords ? 0.2 : 0)         // Messages with keywords matter
+        )
+      };
+    });
 
-    // Get relevant context using embeddings based on full conversation
-    const relevantContent = await searchRelevantContent(userMessages);
+    // Sort by weight and take top messages
+    const significantMessages = previousMessages
+      .sort((a, b) => b.weight - a.weight)
+      .filter(msg => msg.weight > 0.5)
+      .map(msg => msg.content);
+
+    // Search with current query and weighted context
+    const relevantContent = await searchRelevantContent(currentQuery, significantMessages);
     
     // Sort content by relevance score if available
     const context = relevantContent

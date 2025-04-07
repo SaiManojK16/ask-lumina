@@ -9,8 +9,8 @@ export async function middleware(req) {
     const { data: { session } } = await supabase.auth.getSession();
     const path = req.nextUrl.pathname;
 
-    // Allow access to auth pages and static files
-    if (path.startsWith('/auth/') || path.startsWith('/_next/') || path === '/favicon.ico') {
+    // Allow access to auth pages, API routes, and static files
+    if (path.startsWith('/auth/') || path.startsWith('/_next/') || path.startsWith('/api/') || path === '/favicon.ico') {
       // If user is logged in and tries to access auth pages, redirect to home
       if (session && path.startsWith('/auth/')) {
         return NextResponse.redirect(new URL('/', req.url));

@@ -1,324 +1,9 @@
 import { OpenAI } from 'openai';
 import { supabase } from './supabase.js';
-import { luminaInfo } from '@/data/luminaInfo.js';
-import { faqs } from '@/data/faq.js';
-import { regionalSupport } from '@/data/regionalSupport.js';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// Function to clean and format text
-function cleanText(text) {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
-// Function to chunk content into meaningful sections
-function chunkContent() {
-  const chunks = [];
-
-  // Regional Support Information
-  regionalSupport.forEach((person) => {
-    const allRegions = Object.values(person.regions).flat();
-    const allCities = Object.values(person.cities)
-      .flatMap(regionCities => Object.values(regionCities))
-      .flat();
-
-    chunks.push({
-      content: cleanText(`
-        Regional Support Contact
-
-        Name: ${person.name}
-        Designation: ${person.designation}
-        Contact Number: ${person.contact_number}
-        Email: ${person.email}
-
-        Regions Covered:
-        ${Object.entries(person.regions)
-          .map(([region, areas]) => `${region}: ${areas.join(', ')}`)
-          .join('\n')}
-
-        Major Cities:
-        ${Object.entries(person.cities)
-          .map(([region, cityObj]) => 
-            Object.entries(cityObj)
-              .map(([state, cities]) => `${state}: ${cities.join(', ')}`)
-              .join('\n')
-          )
-          .join('\n')}
-      `),
-      metadata: {
-        type: 'regional_support',
-        name: person.name,
-        designation: person.designation,
-        regions: allRegions,
-        cities: allCities,
-        keywords: [
-          'regional support',
-          'contact',
-          person.name.toLowerCase(),
-          ...allRegions.map(r => r.toLowerCase()),
-          ...allCities.map(c => c.toLowerCase())
-        ]
-      }
-    });
-  });
-
-  // Complete Product Overview
-  chunks.push({
-    content: cleanText(`
-      LUMINA SCREENS - COMPLETE PRODUCT LINEUP
-
-      Product Introduction:
-      ${luminaInfo.productIntroduction}
-
-      Available Products:
-      ${luminaInfo.products.map(product => `
-        ${product.name}
-        - Gain: ${product.gain}
-        - Material: ${product.material}
-        - Surface: ${product.surface}
-        - Projection Type: ${product.projectionType || 'Not specified'}
-        - Brief Overview: ${product.description ? product.description.split('.')[0] + '.' : 'No description available'}
-      `).join('\n\n')}
-    `),
-    metadata: {
-      type: 'product_overview',
-      sections: ['overview', 'all_products', 'introduction'],
-      keywords: [
-        'all products',
-        'product lineup',
-        'available products',
-        'product range',
-        'screens',
-        'projection screens',
-        ...luminaInfo.products.map(p => p.name.toLowerCase()),
-        ...luminaInfo.products.map(p => p.material.toLowerCase()),
-        ...luminaInfo.products.map(p => p.surface.toLowerCase())
-      ]
-    }
-  });
-
-  // FAQ Content
-  faqs.forEach((faq, index) => {
-    chunks.push({
-      content: cleanText(`
-        Question: ${faq.question}
-        Answer: ${faq.answer}
-      `),
-      metadata: {
-        type: 'faq',
-        index: index,
-        sections: ['faq', 'questions', 'support'],
-        keywords: faq.question.toLowerCase().split(' ')
-      }
-    });
-  });
-
-  // Individual Product Information
-  luminaInfo.products.forEach(product => {
-    const productChunk = {
-      content: cleanText(`
-        Product Overview: ${product.name}
-        
-        Basic Specifications:
-        - Gain: ${product.gain}
-        - Material: ${product.material}
-        - Surface: ${product.surface}
-        - Projection Type: ${product.projectionType || 'Not specified'}
-        
-        Detailed Description:
-        ${product.description || 'No detailed description available'}
-        
-        Key Features:
-        ${product.keyFeatures ? product.keyFeatures.map(feature => `- ${feature}`).join('\n') : 'No specific features listed'}
-        
-        Product Specifications:
-        ${product.productSpecs ? product.productSpecs.map(spec => `- ${spec}`).join('\n') : 'No additional specifications'}
-        
-        Unique Selling Points:
-        ${product.features ? product.features.map(feature => 
-          `${feature.title}: ${Array.isArray(feature.details) ? feature.details.join(', ') : feature.details}`
-        ).join('\n') : 'No specific unique selling points'}
-        
-        Why Choose This Product:
-        ${product.whyChooseThis ? 
-          (Array.isArray(product.whyChooseThis) ? 
-            product.whyChooseThis.map(point => `- ${point}`).join('\n') : 
-            product.whyChooseThis
-          ) : 'No specific reasons provided'}
-      `),
-      metadata: { 
-        type: 'product_comprehensive',
-        name: product.name,
-        sections: ['overview', 'specs', 'features', 'usp'],
-        keywords: [
-          product.name.toLowerCase(),
-          product.gain,
-          product.material,
-          product.surface,
-          product.projectionType,
-          'product',
-          'screen',
-          'specifications',
-          'features',
-          'technical details',
-          'product information'
-        ]
-      }
-    };
-
-    chunks.push(productChunk);
-  });
-
-  // Company Overview and Basic Information
-  chunks.push({
-    content: cleanText(`
-      Company Overview: ${luminaInfo.companyOverview}
-      About Us: ${luminaInfo.aboutUs}
-      Our Journey: ${luminaInfo.ourJourney}
-      Vision: ${luminaInfo.vision}
-      Mission: ${luminaInfo.mission}
-    `),
-    metadata: { 
-      type: 'company_info',
-      sections: ['overview', 'about', 'journey', 'vision', 'mission'],
-      keywords: ['company', 'about', 'overview', 'journey', 'vision', 'mission', 'lumina', 'screens', 'about us']
-    }
-  });
-
-  // Innovation and Legacy
-  chunks.push({
-    content: cleanText(`
-      Commitment to Innovation: ${luminaInfo.commitmentToInnovation}
-      Our Legacy: ${luminaInfo.ourLegacy}
-      Product Introduction: ${luminaInfo.productIntroduction}
-    `),
-    metadata: { 
-      type: 'company_values',
-      sections: ['innovation', 'legacy', 'products_intro'],
-      keywords: ['innovation', 'legacy', 'technology', 'commitment', 'introduction', 'products']
-    }
-  });
-
-  // Consolidated Unique Selling Points
-  chunks.push({
-    content: cleanText(`
-      UNIQUE SELLING POINTS OF LUMINA SCREENS
-
-      ${luminaInfo.uniqueSellingPoints.map(usp => `
-        ${usp.title}:
-        ${Array.isArray(usp.details) ? 
-          usp.details.map(detail => `- ${detail}`).join('\n') 
-          : usp.details}
-      `).join('\n\n')}
-    `),
-    metadata: { 
-      type: 'unique_selling_points',
-      sections: ['usp'],
-      keywords: [
-        'unique selling points',
-        'usp',
-        'advantages',
-        'benefits',
-        ...luminaInfo.uniqueSellingPoints.map(usp => usp.title.toLowerCase())
-      ]
-    }
-  });
-
-  // Consolidated Market Presence
-  chunks.push({
-    content: cleanText(`
-      MARKET PRESENCE AND REACH
-
-      ${luminaInfo.marketPresence.map(market => `
-        ${market.title}:
-        ${Array.isArray(market.details) ? 
-          market.details.map(detail => `- ${detail}`).join('\n') 
-          : market.details}
-      `).join('\n\n')}
-    `),
-    metadata: { 
-      type: 'market_presence',
-      sections: ['market', 'presence', 'reach'],
-      keywords: [
-        'market presence',
-        'global reach',
-        'distribution',
-        'availability',
-        'market coverage',
-        ...luminaInfo.marketPresence.map(market => market.title.toLowerCase())
-      ]
-    }
-  });
-
-  // Warranty and Support Information
-  chunks.push({
-    content: cleanText(`
-      Warranty Information:
-      ${luminaInfo.warrantyInfo}
-
-      Training and Support:
-      ${luminaInfo.trainingAndSupport}
-    `),
-    metadata: { 
-      type: 'warranty_and_support',
-      sections: ['warranty', 'training'],
-      keywords: ['warranty', 'guarantee', 'support', 'training', 'assistance', 'help']
-    }
-  });
-
-  // Benefits and Technical Specs
-  chunks.push({
-    content: cleanText(`
-      Benefits:
-      ${luminaInfo.benefits.join('\n')}
-      Technical Specifications:
-      ${luminaInfo.technicalSpecs.join('\n')}
-    `),
-    metadata: { 
-      type: 'benefits_and_specs',
-      sections: ['benefits', 'technical_specs'],
-      keywords: ['benefits', 'advantages', 'technical', 'specifications', 'specs', 'features']
-    }
-  });
-
-  // Contact Information
-  chunks.push({
-    content: cleanText(`
-      Lumina Screens - Contact Information
-
-      Company Headquarters:
-      Address: ${luminaInfo.contactInformation.address}
-      
-      Communication Channels:
-      - Email: ${luminaInfo.contactInformation.email}
-      - Phone: ${luminaInfo.contactInformation.phone}
-      - Website: ${luminaInfo.contactInformation.website}
-
-      Social Media Presence:
-      - Facebook: ${luminaInfo.contactInformation.facebook}
-      - Instagram: ${luminaInfo.contactInformation.instagram}
-      - LinkedIn: ${luminaInfo.contactInformation.linkein}
-      - YouTube: ${luminaInfo.contactInformation.youtube}
-
-      Customer Support:
-      - For product inquiries and support, please use the contact details above
-      - Business Hours: ${luminaInfo.businessHours || ''}
-
-      Additional Contact Notes:
-      - Global Reach: Headquartered in Mumbai, India
-      - International Presence: Serving customers worldwide
-    `),
-    metadata: { 
-      type: 'contact',
-      sections: ['headquarters', 'communication', 'social_media', 'support'],
-      keywords: ['contact', 'email', 'phone', 'address', 'social media', 'support', 'business hours', 'headquarters', 'global']
-    }
-  });
-
-  return chunks;
-}
 
 // Content types enum for consistency
 const CONTENT_TYPES = {
@@ -345,7 +30,8 @@ async function fetchDataFromSource(type, ids = null) {
           description,
           product_specs,
           features,
-          why_choose_this
+          why_choose_this,
+          technical_datasheet
         `);
         break;
 
@@ -358,7 +44,7 @@ async function fetchDataFromSource(type, ids = null) {
         break;
 
       case CONTENT_TYPES.REGIONAL_SUPPORT:
-        query = query.select('id, name, designation, contact_number, email, regions, cities');
+        query = query.select('id, name, designation, contact_number, email, regions, states, cities');
         break;
 
       default:
@@ -394,89 +80,120 @@ async function fetchDataFromSource(type, ids = null) {
 async function processContentToChunks(data, type) {
   switch (type) {
     case CONTENT_TYPES.PRODUCT:
-      return data.flatMap(product => [
-        // Basic info chunk
-        {
-          content: `Product: ${product.name}
+      return data.map(product => ({
+        content: `Product: ${product.name}
 
-          ${product.description}
+        Technical Datasheet:
+        ${product.technical_datasheet || 'No technical datasheet available.'}
 
-          Specifications:
-          - Gain: ${product.gain}
-          - Material: ${product.material}
-          - Surface: ${product.surface}
-          - Projection Type: ${product.projection_type || 'Not specified'}`,
-          type: CONTENT_TYPES.PRODUCT,
-          source_id: product.id.toString(),
-          metadata: {
-            name: product.name,
-            specs: {
-              gain: product.gain,
-              material: product.material,
-              surface: product.surface
-            },
-            field: 'basic_info'
-          }
-        },
-        // Product specs chunk
-        ...(product.product_specs ? [{
-          content: `Product Specifications for ${product.name}:\n${product.product_specs.join('\n')}`,
-          type: CONTENT_TYPES.PRODUCT,
-          source_id: product.id.toString(),
-          metadata: {
-            name: product.name,
-            field: 'product_specs'
-          }
-        }] : []),
-        // Features chunk
-        ...(product.features ? [{
-          content: `Features of ${product.name}:\n${product.features.map(f => `${f.title}: ${f.details}`).join('\n')}`,
-          type: CONTENT_TYPES.PRODUCT,
-          source_id: product.id.toString(),
-          metadata: {
-            name: product.name,
-            field: 'features'
-          }
-        }] : []),
-        // Why choose this chunk
-        ...(product.why_choose_this ? [{
-          content: `Why Choose ${product.name}:\n${product.why_choose_this.join('\n')}`,
-          type: CONTENT_TYPES.PRODUCT,
-          source_id: product.id.toString(),
-          metadata: {
-            name: product.name,
-            field: 'why_choose_this'
-          }
-        }] : [])
-      ]);
+        Product Description:
+        ${product.description || 'No description available.'}
+
+        Basic Specifications:
+        - Gain: ${product.gain}
+        - Material: ${product.material}
+        - Surface: ${product.surface}
+        - Projection Type: ${product.projection_type || 'Not specified'}
+
+        Detailed Specifications:
+        ${product.product_specs ? product.product_specs.map(spec => `- ${spec}`).join('\n') : 'No additional specifications available.'}
+
+        Features and Benefits:
+        ${product.features ? product.features.map(f => `${f.title}:
+        ${Array.isArray(f.details) ? f.details.map(d => `- ${d}`).join('\n') : `- ${f.details}`}`).join('\n\n') : 'No specific features listed.'}
+
+        Why Choose ${product.name}:
+        ${product.why_choose_this ? product.why_choose_this.map(reason => `- ${reason}`).join('\n') : 'No specific reasons provided.'}`,
+        type: CONTENT_TYPES.PRODUCT,
+        source_id: product.id.toString(),
+        metadata: {
+          name: product.name.toLowerCase(),
+          specs: {
+            gain: product.gain,
+            material: product.material.toLowerCase(),
+            surface: product.surface.toLowerCase(),
+            projection_type: (product.projection_type || '').toLowerCase()
+          },
+          keywords: [
+            product.name.toLowerCase(),
+            product.material.toLowerCase(),
+            product.surface.toLowerCase(),
+            (product.projection_type || '').toLowerCase(),
+            'product',
+            'screen',
+            'projection screen',
+            'specifications',
+            'features',
+            'benefits',
+            'technical details',
+            'datasheet',
+            'technical specifications',
+            'product specs',
+            'gain value',
+            'screen material',
+            'surface type',
+            'projection system',
+            ...(product.features?.map(f => f.title.toLowerCase()) || []),
+            ...(product.features?.flatMap(f => Array.isArray(f.details) ? f.details.map(d => d.toLowerCase()) : [f.details.toLowerCase()]) || [])
+          ]
+        }
+      }));
 
     case CONTENT_TYPES.FAQ:
       return data.map(faq => ({
-        content: `Q: ${faq.question}\nA: ${faq.answer}${faq.category ? `\nCategory: ${faq.category}` : ''}${faq.tags ? `\nTags: ${faq.tags.join(', ')}` : ''}`,
+        content: `FAQs: Q: ${faq.question}\nA: ${faq.answer}${faq.category ? `\nCategory: ${faq.category}` : ''}${faq.tags ? `\nTags: ${faq.tags.join(', ')}` : ''}`,
         type: CONTENT_TYPES.FAQ,
           source_id: faq.id.toString(),
           metadata: {
-            category: faq.category,
-            tags: faq.tags
+            category: faq.category?.toLowerCase(),
+            tags: faq.tags,
+            keywords: [
+              'faq',
+              'question',
+              'help',
+              'support',
+              ...(faq.question.toLowerCase().split(' ')),
+              ...(faq.category ? [faq.category.toLowerCase()] : []),
+              ...(faq.tags?.map(tag => tag.toLowerCase()) || [])
+            ]
           }
       }));
 
     case CONTENT_TYPES.REGIONAL_SUPPORT:
       return data.map(person => ({
-        content: `${person.name} - ${person.designation}\nContact: ${person.contact_number}\nEmail: ${person.email}\n\nRegions: ${JSON.stringify(person.regions)}\nCities: ${JSON.stringify(person.cities)}`,
+        content: `Regional Support / Sales Contact: ${person.name}
+        Designation: ${person.designation}
+        Contact: ${person.contact_number}
+        Email: ${person.email}
+        States: ${JSON.stringify(person.states)}
+        Regions: ${JSON.stringify(person.regions)}
+        Cities: ${JSON.stringify(person.cities)}`,
         type: CONTENT_TYPES.REGIONAL_SUPPORT,
           source_id: person.id.toString(),
           metadata: {
-            name: person.name,
-            designation: person.designation,
-            regions: person.regions,
-            cities: person.cities
+            name: person.name.toLowerCase(),
+            designation: person.designation.toLowerCase(),
+            regions: person.regions.map(r => r.toLowerCase()),
+            states: person.states.map(s => s.toLowerCase()),
+            cities: person.cities.map(c => c.toLowerCase()),
+            keywords: [
+              'sales',
+              'support',
+              'contact',
+              'regional',
+              'representative',
+              person.name.toLowerCase(),
+              person.designation.toLowerCase(),
+              ...person.regions.map(r => r.toLowerCase()),
+              ...person.states.map(s => s.toLowerCase()),
+              ...person.cities.map(c => c.toLowerCase())
+            ]
           }
       }));
 
     case CONTENT_TYPES.COMPANY_INFO:
       return data.map(info => ({
-        content: info.content,
+        content: `${info.key}: ${info.content}`,
         type: CONTENT_TYPES.COMPANY_INFO,
           source_id: info.id.toString(),
           metadata: {
@@ -583,17 +300,40 @@ export async function deleteEmbeddings({ type, ids }) {
 }
 
 // Function to search relevant content
-export async function searchRelevantContent(query) {
+export async function searchRelevantContent(query, recentMessages = []) {
   try {
-    const embedding = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: query,
+    // Clean and prepare queries
+    const cleanQuery = query.trim().toLowerCase();
+    const cleanContext = recentMessages.map(msg => msg.trim().toLowerCase());
+
+    // Create embeddings for both query and each context message
+    const [queryEmbedding, ...contextEmbeddings] = await Promise.all([
+      openai.embeddings.create({
+        model: "text-embedding-ada-002",
+        input: cleanQuery,
+      }),
+      ...cleanContext.map(ctx => 
+        openai.embeddings.create({
+          model: "text-embedding-ada-002",
+          input: ctx,
+        })
+      )
+    ]);
+
+    // Combine embeddings with weighted average
+    const combinedEmbedding = queryEmbedding.data[0].embedding.map((val, i) => {
+      const contextValues = contextEmbeddings.map((emb, idx) => {
+        const weight = 1 / Math.pow(2, idx + 1); // Exponential decay for older context
+        return emb.data[0].embedding[i] * weight;
+      });
+      const contextSum = contextValues.reduce((a, b) => a + b, 0);
+      return (val * 0.6 + contextSum * 0.4); // 60% current query, 40% weighted context
     });
 
     const { data: matches, error } = await supabase.rpc('match_embeddings', {
-      query_embedding: embedding.data[0].embedding,
-      match_threshold: 0.6,
-      match_count: 15
+      query_embedding: combinedEmbedding,
+      match_threshold: 0.55,
+      match_count: 20
     });
 
     if (error) throw error;
@@ -603,31 +343,141 @@ export async function searchRelevantContent(query) {
     }
 
     // Helper function to calculate keyword relevance
-    const calculateKeywordRelevance = (metadata, queryTerms) => {
+    const calculateKeywordRelevance = (metadata, queryTerms, contentType) => {
       if (!metadata?.keywords) return 0;
       
-      const keywordMatches = metadata.keywords.filter(keyword =>
-        queryTerms.some(term => keyword.toLowerCase().includes(term))
+      // Calculate exact and partial matches with type-specific weights
+      const exactMatches = metadata.keywords.filter(keyword =>
+        queryTerms.some(term => keyword === term)
       ).length;
       
-      return keywordMatches / metadata.keywords.length;
+      const partialMatches = metadata.keywords.filter(keyword =>
+        queryTerms.some(term => keyword.includes(term) && keyword !== term)
+      ).length;
+      
+      // Content type specific scoring
+      // Base score from exact and partial matches
+      let baseScore = (exactMatches * 1.5 + partialMatches) / (metadata.keywords.length * 1.5);
+      
+      switch(contentType) {
+        case 'products':
+          // Product-specific boosts
+          const hasSpecs = queryTerms.some(term => 
+            ['gain', 'material', 'surface', 'size', 'dimension'].includes(term));
+          const hasTechnical = queryTerms.some(term => 
+            ['technical', 'datasheet', 'specification'].includes(term));
+          return baseScore + (hasSpecs ? 0.3 : 0) + (hasTechnical ? 0.2 : 0);
+
+        case 'faqs':
+          // FAQ-specific scoring
+          const isQuestion = queryTerms.some(term => 
+            ['how', 'what', 'why', 'when', 'where', 'can', 'will'].includes(term));
+          const questionMatch = metadata.question ? 
+            queryTerms.every(term => metadata.question.toLowerCase().includes(term)) ? 0.4 : 0 : 0;
+          const categoryMatch = metadata.category && queryTerms.some(term => 
+            metadata.category.toLowerCase().includes(term)) ? 0.2 : 0;
+          return baseScore + (isQuestion ? 0.3 : 0) + questionMatch + categoryMatch;
+
+        case 'regional_support':
+          // Regional support scoring with enhanced location matching
+          const locationMatches = [
+            metadata.regions?.some(r => queryTerms.some(term => r.toLowerCase().includes(term))),
+            metadata.cities?.some(c => queryTerms.some(term => c.toLowerCase().includes(term))),
+            metadata.states?.some(s => queryTerms.some(term => s.toLowerCase().includes(term)))
+          ].filter(Boolean).length;
+          const locationScore = locationMatches * 0.2;
+          const contactIntent = queryTerms.some(term => 
+            ['contact', 'sales', 'support', 'purchase', 'buy'].includes(term)) ? 0.3 : 0;
+          return baseScore + locationScore + contactIntent;
+
+        default:
+          return baseScore;
+      }
     };
 
-    const queryTerms = query.toLowerCase().split(/\s+/);
+    // Extract meaningful terms and phrases
+    const queryTerms = cleanQuery
+      .split(/[\s,;]+/) // Split on multiple types of separators
+      .filter(term => term.length > 2) // Filter out very short words
+      .concat(extractPhrases(cleanQuery)); // Add potential phrases
+    
+    // Add context terms if they're relevant
+    const contextTerms = cleanContext
+      .flatMap(ctx => ctx.split(/[\s,;]+/))
+      .filter(term => term.length > 2)
+      .filter(term => isRelevantContextTerm(term, cleanQuery));
+    
+    const allTerms = [...new Set([...queryTerms, ...contextTerms])];
+    
+    // Detect query intent
+    const queryIntent = detectQueryIntent(cleanQuery);
 
-    // Process and score matches
+    // Helper functions for query analysis
+    function extractPhrases(text) {
+      const phrases = [];
+      const words = text.split(' ');
+      for (let i = 0; i < words.length - 1; i++) {
+        phrases.push(words[i] + ' ' + words[i + 1]);
+      }
+      return phrases;
+    }
+
+    function isRelevantContextTerm(term, query) {
+      const relevantTerms = ['screen', 'projector', 'gain', 'material', 'surface', 'size', 'lumens'];
+      return relevantTerms.some(rt => term.includes(rt)) || query.includes(term);
+    }
+
+    function detectQueryIntent(query) {
+      const intents = {
+        product: /product|screen|material|gain|surface|projection|theatre|home theatre|ambient|light|viewing|lumens/i,
+        support: /support|help|contact|service|regional|sales|purchase|buy|order|quote/i,
+        technical: /specification|datasheet|technical|specs|details|dimensions|size/i,
+        location: /location|city|region|state|area|address|office|branch/i,
+        faq: /how|what|why|when|where|can|will|should|difference|between|compare|vs|versus/i
+      };
+      return Object.entries(intents)
+        .filter(([_, pattern]) => pattern.test(query))
+        .map(([intent]) => intent);
+    }
+
+    // Process and score matches with intent-based boosting
     const scoredMatches = matches.map(match => {
-      const keywordScore = calculateKeywordRelevance(match.metadata, queryTerms);
-      const isProduct = match.metadata?.type === 'product_comprehensive';
-      const isContact = match.metadata?.type === 'contact';
+      const contentType = match.metadata?.type;
+      const keywordScore = calculateKeywordRelevance(match.metadata, allTerms, contentType);
+      
+      // Calculate intent alignment
+      const intentAlignment = queryIntent.some(intent => {
+        switch(intent) {
+          case 'product':
+            return contentType === 'products';
+          case 'support':
+            return contentType === 'regional_support';
+          case 'technical':
+            return contentType === 'products' && 
+              (match.content.toLowerCase().includes('technical') || 
+               match.content.toLowerCase().includes('datasheet') || 
+               match.content.toLowerCase().includes('specifications'));
+          case 'location':
+            return contentType === 'regional_support' && 
+              (match.metadata?.regions?.length > 0 || 
+               match.metadata?.cities?.length > 0 || 
+               match.metadata?.states?.length > 0);
+          case 'faq':
+            return contentType === 'faqs';
+          default:
+            return false;
+        }
+      }) ? 0.15 : 0;
 
       return {
         ...match,
         score: (
-          match.similarity * 0.6 +     // 60% weight to embedding similarity
-          keywordScore * 0.4 +         // 40% weight to keyword matching
-          (isProduct ? 0.2 : 0) +      // Boost for product information
-          (isContact ? 0.1 : 0)        // Small boost for contact information
+          match.similarity * 0.40 +    // 40% weight to embedding similarity
+          keywordScore * 0.35 +        // 35% weight to keyword matching
+          intentAlignment * 0.15 +     // 15% for intent alignment
+          (contentType === 'products' ? 0.05 : 0) +        // 5% boost for products
+          (contentType === 'regional_support' ? 0.03 : 0) + // 3% boost for support
+          (contentType === 'faqs' ? 0.02 : 0)              // 2% boost for FAQs
         )
       };
     });

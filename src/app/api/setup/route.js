@@ -67,7 +67,7 @@ export async function POST(req) {
     const regionalSupportData = regionalSupport.map(support => ({
       name: support.name,
       designation: support.designation,
-      contact_number: support.contactNumber,
+      contact_number: support.contact_number,
       email: support.email,
       regions: support.regions,
       cities: support.cities
