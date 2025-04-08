@@ -120,18 +120,6 @@ export default function FAQsPage() {
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent-light/10 via-transparent to-transparent dark:from-accent-dark/10 dark:via-transparent dark:to-transparent"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-accent-light/5 via-transparent to-transparent dark:from-accent-dark/5 dark:via-transparent dark:to-transparent"></div>
-      <Header />
-      <main className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl relative">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-accent-light/20 border-t-accent-light"></div>
-        </div>
-      </main>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
@@ -260,53 +248,61 @@ export default function FAQsPage() {
         document.body
       )}
 
-      <div className="bg-white/90 dark:bg-gray-800/90 shadow-sm rounded-xl overflow-hidden ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] backdrop-blur-sm">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gradient-to-br from-accent-light/[0.07] to-transparent dark:from-accent-dark/[0.07] dark:to-transparent flex items-center justify-between">
-          <h2 className="text-base font-medium text-gray-900 dark:text-white">
-            {searchTerm ? `Search Results (${filteredFaqs.length})` : 'All FAQs'}
-          </h2>
-        </div>
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {filteredFaqs.map((faq) => (
-            <div key={faq.id} className="group hover:bg-accent-light/[0.02] dark:hover:bg-accent-dark/[0.02] transition-colors">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-accent-light dark:group-hover:text-accent-dark transition-colors">
-                      {faq.question}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                      {faq.answer}
-                    </p>
-                    <div className="mt-2">
-                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded">
-                        {faq.category}
-                      </span>
+      <div className="space-y-6">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-accent-light/20 border-t-accent-light"></div>
+          </div>
+        ) : (
+          <div className="bg-white/90 dark:bg-gray-800/90 shadow-sm rounded-xl overflow-hidden ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] backdrop-blur-sm">
+            <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gradient-to-br from-accent-light/[0.07] to-transparent dark:from-accent-dark/[0.07] dark:to-transparent flex items-center justify-between">
+              <h2 className="text-base font-medium text-gray-900 dark:text-white">
+                {searchTerm ? `Search Results (${filteredFaqs.length})` : 'All FAQs'}
+              </h2>
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredFaqs.map((faq) => (
+                <div key={faq.id} className="group hover:bg-accent-light/[0.02] dark:hover:bg-accent-dark/[0.02] transition-colors">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-accent-light dark:group-hover:text-accent-dark transition-colors">
+                          {faq.question}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {faq.answer}
+                        </p>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded">
+                            {faq.category}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                          onClick={() => handleEdit(faq)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded-lg hover:bg-accent-light/20 dark:hover:bg-accent-dark/20 transition-colors"
+                          title="Edit FAQ"
+                        >
+                          <FaEdit size={14} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(faq.id)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors"
+                          title="Delete FAQ"
+                        >
+                          <FaTrash size={14} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="ml-4 flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                      onClick={() => handleEdit(faq)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded-lg hover:bg-accent-light/20 dark:hover:bg-accent-dark/20 transition-colors"
-                      title="Edit FAQ"
-                    >
-                      <FaEdit size={14} />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(faq.id)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors"
-                      title="Delete FAQ"
-                    >
-                      <FaTrash size={14} />
-                      <span>Delete</span>
-                    </button>
-                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </main>
   </div>
