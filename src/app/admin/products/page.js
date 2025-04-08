@@ -76,6 +76,8 @@ export default function ProductsPage() {
         material: '',
         surface: '',
         projection_type: '',
+        gain: '',
+        technical_datasheet: '',
         features: [],
         why_choose_this: [],
         product_specs: []
@@ -90,7 +92,15 @@ export default function ProductsPage() {
   };
 
   const handleEdit = (product) => {
-    setNewProduct(product);
+    // Ensure all fields are properly initialized
+    setNewProduct({
+      ...product,
+      features: Array.isArray(product.features) ? product.features : [],
+      why_choose_this: Array.isArray(product.why_choose_this) ? product.why_choose_this : [],
+      product_specs: Array.isArray(product.product_specs) ? product.product_specs : [],
+      gain: product.gain || '',
+      technical_datasheet: product.technical_datasheet || ''
+    });
     setEditingId(product.id);
     setShowForm(true);
     setSelectedProduct(null);
@@ -283,7 +293,7 @@ export default function ProductsPage() {
                       type="text"
                       value={newProduct.name}
                       onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                       required
                     />
                   </div>
@@ -296,12 +306,12 @@ export default function ProductsPage() {
                       value={newProduct.description}
                       onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                       rows={4}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Material
@@ -310,7 +320,7 @@ export default function ProductsPage() {
                         type="text"
                         value={newProduct.material}
                         onChange={(e) => setNewProduct({ ...newProduct, material: e.target.value })}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                         required
                       />
                     </div>
@@ -322,7 +332,7 @@ export default function ProductsPage() {
                         type="text"
                         value={newProduct.surface}
                         onChange={(e) => setNewProduct({ ...newProduct, surface: e.target.value })}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                         required
                       />
                     </div>
@@ -334,10 +344,88 @@ export default function ProductsPage() {
                         type="text"
                         value={newProduct.projection_type}
                         onChange={(e) => setNewProduct({ ...newProduct, projection_type: e.target.value })}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                         required
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Gain
+                      </label>
+                      <input
+                        type="text"
+                        value={newProduct.gain}
+                        onChange={(e) => setNewProduct({ ...newProduct, gain: e.target.value })}
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Technical Datasheet URL
+                    </label>
+                    <input
+                      type="url"
+                      value={newProduct.technical_datasheet}
+                      onChange={(e) => setNewProduct({ ...newProduct, technical_datasheet: e.target.value })}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      placeholder="https://example.com/datasheet.pdf"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Features (one per line)
+                    </label>
+                    <textarea
+                      value={Array.isArray(newProduct.features) ? newProduct.features.map(f => typeof f === 'string' ? f : `${f.title}: ${f.details}`).join('\n') : ''}
+                      onChange={(e) => {
+                        const lines = e.target.value.split('\n').filter(line => line.trim());
+                        const features = lines.map(line => {
+                          const [title, ...details] = line.split(':');
+                          return details.length > 0 
+                            ? { title: title.trim(), details: details.join(':').trim() }
+                            : { title: line.trim(), details: '' };
+                        });
+                        setNewProduct({ ...newProduct, features });
+                      }}
+                      rows={4}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      placeholder="Feature title: Feature details\nAnother feature: More details"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Why Choose This (one per line)
+                    </label>
+                    <textarea
+                      value={Array.isArray(newProduct.why_choose_this) ? newProduct.why_choose_this.join('\n') : ''}
+                      onChange={(e) => setNewProduct({ 
+                        ...newProduct, 
+                        why_choose_this: e.target.value.split('\n').filter(line => line.trim())
+                      })}
+                      rows={4}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      placeholder="Reason 1\nReason 2\nReason 3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Product Specifications (one per line)
+                    </label>
+                    <textarea
+                      value={Array.isArray(newProduct.product_specs) ? newProduct.product_specs.join('\n') : ''}
+                      onChange={(e) => setNewProduct({ 
+                        ...newProduct, 
+                        product_specs: e.target.value.split('\n').filter(line => line.trim())
+                      })}
+                      rows={4}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      placeholder="Specification 1\nSpecification 2\nSpecification 3"
+                    />
                   </div>
 
                   <div className="flex justify-end gap-3">
