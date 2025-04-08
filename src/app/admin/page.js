@@ -1,271 +1,165 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/utils/supabase';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import { FaEdit, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
-import { Manrope } from 'next/font/google';
-import { createPortal } from 'react-dom';
+import { 
+  FaCog, 
+  FaQuestionCircle, 
+  FaBuilding, 
+  FaMapMarkerAlt,
+  FaChevronRight 
+} from 'react-icons/fa';
+import { supabase } from '@/utils/supabase';
 
-const manrope = Manrope({ subsets: ['latin'] });
+const sections = [
+  {
+    title: 'Product Management',
+    description: 'Configure product specifications, technical documentation, and feature sets',
+    path: '/admin/products',
+    icon: FaCog,
+    table: 'products',
+    metrics: {
+      total: 'Products',
+      value: '0'
+    }
+  },
+  {
+    title: 'Product FAQs',
+    description: 'Manage frequently asked questions and product support information',
+    path: '/admin/faqs',
+    icon: FaQuestionCircle,
+    table: 'faqs',
+    metrics: {
+      total: 'FAQs',
+      value: '0'
+    }
+  },
+  {
+    title: 'Company Profile',
+    description: 'Update company mission, vision, history, and market positioning',
+    path: '/admin/company-info',
+    icon: FaBuilding,
+    table: 'company_info',
+    metrics: {
+      total: 'Documents',
+      value: '0'
+    }
+  },
+  {
+    title: 'Support Team',
+    description: 'Manage support team contacts and availability information',
+    path: '/admin/regional-support',
+    icon: FaMapMarkerAlt,
+    table: 'regional_support',
+    metrics: {
+      total: 'Staff',
+      value: '0'
+    }
+  }
+];
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [faqs, setFaqs] = useState([]);
-  const [newFaq, setNewFaq] = useState({ question: '', answer: '', category: '' });
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [metrics, setMetrics] = useState({});
 
   useEffect(() => {
-    fetchFaqs();
+    const fetchMetrics = async () => {
+      for (const section of sections) {
+        if (section.table) {
+          try {
+            const { count, error } = await supabase
+              .from(section.table)
+              .select('*', { count: 'exact', head: true });
+
+            if (!error) {
+              setMetrics(prev => ({
+                ...prev,
+                [section.table]: count || 0
+              }));
+            }
+          } catch (error) {
+            console.error(`Error fetching ${section.table} count:`, error);
+          }
+        }
+      }
+    };
+
+    fetchMetrics();
   }, []);
 
-  const fetchFaqs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('faqs')
-        .select('*')
-        .order('id');
-      
-      if (error) throw error;
-      setFaqs(data || []);
-    } catch (error) {
-      console.error('Error fetching FAQs:', error);
-      alert('Error loading FAQs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingId) {
-        // Update existing FAQ
-        const { data, error } = await supabase
-          .from('faqs')
-          .update({
-            question: newFaq.question,
-            answer: newFaq.answer,
-            category: newFaq.category
-          })
-          .eq('id', editingId)
-          .select();
-
-        if (error) throw error;
-        alert('FAQ updated successfully!');
-      } else {
-        // Add new FAQ
-        const { error } = await supabase
-          .from('faqs')
-          .insert([{
-            question: newFaq.question,
-            answer: newFaq.answer,
-            category: newFaq.category
-          }]);
-
-        if (error) throw error;
-        alert('FAQ added successfully!');
-      }
-
-      // Reset form and refresh FAQs
-      setNewFaq({ question: '', answer: '', category: '' });
-      setEditingId(null);
-      setShowForm(false); // Hide form after successful submit
-      fetchFaqs();
-    } catch (error) {
-      console.error('Error saving FAQ:', error);
-      alert('Error saving FAQ');
-    }
-  };
-
-  const handleEdit = (faq) => {
-    setNewFaq({
-      question: faq.question,
-      answer: faq.answer,
-      category: faq.category
-    });
-    setEditingId(faq.id);
-    setShowForm(true); // Show form when editing
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return;
-    
-    try {
-      const { error } = await supabase
-        .from('faqs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      alert('FAQ deleted successfully!');
-      fetchFaqs();
-    } catch (error) {
-      console.error('Error deleting FAQ:', error);
-      alert('Error deleting FAQ');
-    }
-  };
-
-  if (loading) return <div className="p-4">Loading...</div>;
-
   return (
-    <div className={`min-h-screen bg-primary-light dark:bg-primary-dark text-regular-light dark:text-regular-dark ${manrope.className}`}>
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent-light/10 via-transparent to-transparent dark:from-accent-dark/10 dark:via-transparent dark:to-transparent"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-accent-light/5 via-transparent to-transparent dark:from-accent-dark/5 dark:via-transparent dark:to-transparent"></div>
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-accent-light to-accent-dark bg-clip-text text-transparent">
-            FAQ Management
-          </h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-accent-light to-accent-dark text-white rounded-lg hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl font-medium"
-          >
-            {showForm ? <FaTimes className="text-lg" /> : <FaPlus className="text-lg" />}
-            {showForm ? 'Close Form' : 'Add New FAQ'}
-          </button>
-        </div>
-      
-      {/* Modal */}
-      {showForm && createPortal(
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
-            className="bg-primary-light dark:bg-primary-dark rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-tertiary-light dark:border-tertiary-dark transform transition-all duration-300 scale-100 opacity-100"
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-tertiary-light dark:border-tertiary-dark bg-gradient-to-r from-accent-light/10 to-accent-dark/10">
-              <h2 className="text-2xl font-semibold text-regular-light dark:text-regular-dark flex items-center gap-3">
-                {editingId ? (
-                  <FaEdit className="text-accent-light dark:text-accent-dark text-2xl" />
-                ) : (
-                  <FaPlus className="text-accent-light dark:text-accent-dark text-2xl" />
-                )}
-                {editingId ? 'Edit FAQ' : 'Add New FAQ'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                  setNewFaq({ question: '', answer: '', category: '' });
-                }}
-                className="p-2 text-muted-light dark:text-muted-dark hover:text-regular-light dark:hover:text-regular-dark transition-colors hover:scale-110 transform"
-              >
-                <FaTimes size={24} />
-              </button>
-            </div>
-            
-            {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="space-y-6">
-                <div>
-                  <label className="block mb-2 text-regular-light dark:text-regular-dark">Question:</label>
-                  <input
-                    type="text"
-                    value={newFaq.question}
-                    onChange={(e) => setNewFaq({...newFaq, question: e.target.value})}
-                    className="w-full p-3 border border-tertiary-light dark:border-tertiary-dark rounded-md bg-secondary-light dark:bg-secondary-dark text-regular-light dark:text-regular-dark focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-regular-light dark:text-regular-dark">Answer:</label>
-                  <textarea
-                    value={newFaq.answer}
-                    onChange={(e) => setNewFaq({...newFaq, answer: e.target.value})}
-                    className="w-full p-3 border border-tertiary-light dark:border-tertiary-dark rounded-md bg-secondary-light dark:bg-secondary-dark text-regular-light dark:text-regular-dark focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark focus:border-transparent h-32"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-regular-light dark:text-regular-dark">Category:</label>
-                  <input
-                    type="text"
-                    value={newFaq.category}
-                    onChange={(e) => setNewFaq({...newFaq, category: e.target.value})}
-                    className="w-full p-3 border border-tertiary-light dark:border-tertiary-dark rounded-md bg-secondary-light dark:bg-secondary-dark text-regular-light dark:text-regular-dark focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark focus:border-transparent"
-                    required
-                  />
-                </div>
-                
-                {/* Modal Footer */}
-                <div className="flex gap-4 justify-end mt-8">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingId(null);
-                      setNewFaq({ question: '', answer: '', category: '' });
-                    }}
-                    className="px-6 py-2.5 border-2 border-tertiary-light dark:border-tertiary-dark text-regular-light dark:text-regular-dark hover:bg-tertiary-light/10 dark:hover:bg-tertiary-dark/10 rounded-lg transition-all duration-200 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 bg-gradient-to-r from-accent-light to-accent-dark text-white rounded-lg hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 font-medium flex items-center gap-2"
-                  >
-                    {editingId ? (
-                      <>
-                        <FaEdit className="text-lg" />
-                        Update FAQ
-                      </>
-                    ) : (
-                      <>
-                        <FaPlus className="text-lg" />
-                        Add FAQ
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </form>
+      <main className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl relative">
+        <div className="space-y-8">
+          
+          <div className="mb-16 text-center relative">
+            <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-accent-light/30 dark:via-accent-dark/30 to-transparent"></div>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white relative px-4">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-accent-light to-accent-dark dark:from-accent-dark dark:to-accent-light">
+                Administration Console
+              </span>
+            </h1>
+            <p className="mt-3 text-base text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+              Secure enterprise management interface for system configuration and content administration
+            </p>
           </div>
-        </div>,
-        document.body
-      )}
 
-      <div className="bg-secondary-light dark:bg-secondary-dark rounded-xl shadow-lg overflow-hidden border border-tertiary-light dark:border-tertiary-dark">
-        <div className="p-6 border-b border-tertiary-light dark:border-tertiary-dark bg-gradient-to-r from-accent-light/10 to-accent-dark/10">
-          <h2 className="text-2xl font-semibold text-regular-light dark:text-regular-dark">Existing FAQs</h2>
-        </div>
-        <div className="divide-y divide-tertiary-light dark:divide-tertiary-dark">
-          {faqs.map((faq) => (
-            <div key={faq.id} className="group p-6 hover:bg-accent-light/5 dark:hover:bg-accent-dark/5 transition-all duration-200">
-              <div className="flex justify-between items-start gap-6">
-                <div className="flex-1 space-y-3">
-                  <h3 className="text-lg font-semibold text-regular-light dark:text-regular-dark group-hover:text-accent-light dark:group-hover:text-accent-dark transition-colors">
-                    {faq.question}
-                  </h3>
-                  <p className="text-muted-light dark:text-muted-dark whitespace-pre-wrap leading-relaxed">
-                    {faq.answer}
-                  </p>
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded-full">
-                    {faq.category}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {sections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <div
+                  key={section.path}
+                  className="group bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-sm ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] hover:shadow-lg hover:ring-accent-light/20 dark:hover:ring-accent-dark/20 transition-all duration-300 relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent-light/[0.07] to-transparent dark:from-accent-dark/[0.07] dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-accent-light/30 dark:via-accent-dark/30 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                  
                   <button
-                    onClick={() => handleEdit(faq)}
-                    className="p-2 text-accent-light hover:text-accent-dark transition-colors duration-200 hover:scale-110 transform"
-                    title="Edit FAQ"
+                    onClick={() => router.push(section.path)}
+                    className="w-full p-6 text-left relative"
                   >
-                    <FaEdit size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(faq.id)}
-                    className="p-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500 transition-colors duration-200 hover:scale-110 transform"
-                    title="Delete FAQ"
-                  >
-                    <FaTrash size={20} />
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-6">
+                        <div className="flex flex-col">
+                          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent-light/10 to-accent-light/5 dark:from-accent-dark/10 dark:to-accent-dark/5 group-hover:from-accent-light/20 group-hover:to-accent-light/10 dark:group-hover:from-accent-dark/20 dark:group-hover:to-accent-dark/10 transition-all duration-300 mb-4 flex items-center justify-center">
+                            <Icon className="w-12 h-12 text-accent-light/70 dark:text-accent-dark/70 group-hover:text-accent-light dark:group-hover:text-accent-dark transition-colors" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-accent-light to-accent-dark group-hover:from-accent-dark group-hover:to-accent-light transition-all duration-300">
+                              {metrics[section.table] || '0'}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                              {section.metrics.total}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-accent-light dark:group-hover:text-accent-dark transition-colors mb-2">
+                            {section.title}
+                          </h2>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors pr-8">
+                            {section.description}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="relative group/arrow">
+                        <div className="absolute -inset-2 bg-accent-light/5 dark:bg-accent-dark/5 rounded-lg scale-0 group-hover/arrow:scale-100 transition-transform duration-200"></div>
+                        <FaChevronRight className="w-5 h-5 text-accent-light/70 dark:text-accent-dark/70 group-hover:text-accent-light dark:group-hover:text-accent-dark transform group-hover:translate-x-1.5 transition-all duration-300 relative z-10" />
+                      </div>
+                    </div>
                   </button>
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
-      </div>
       </main>
     </div>
   );
