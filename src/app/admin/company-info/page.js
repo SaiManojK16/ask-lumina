@@ -96,22 +96,13 @@ export default function CompanyProfilePage() {
       <main className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl relative">
         <div className="mb-12 space-y-8">
           <div className="relative flex flex-col items-center gap-6">
-            <div className="w-full flex justify-between items-center">
-              <button
-                onClick={() => router.push('/admin')}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-accent-light dark:text-accent-dark hover:bg-accent-light/10 dark:hover:bg-accent-dark/10 rounded-lg transition-colors"
-              >
-                <FaArrowLeft size={14} />
-                <span>Back to Admin</span>
-              </button>
-              <button
-                onClick={handleAddNew}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors"
-              >
-                <FaPlus size={14} />
-                <span>Add New</span>
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/admin')}
+              className="self-start inline-flex items-center gap-2 px-3 py-1.5 text-sm text-accent-light dark:text-accent-dark hover:bg-accent-light/10 dark:hover:bg-accent-dark/10 rounded-lg transition-colors"
+            >
+              <FaArrowLeft size={14} />
+              <span>Back to Admin</span>
+            </button>
             <div className="text-center">
               <h1 className="text-4xl font-bold text-gray-900 dark:text-white relative px-4">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-accent-light to-accent-dark dark:from-accent-dark dark:to-accent-light">
@@ -122,6 +113,25 @@ export default function CompanyProfilePage() {
                 Manage your company profile information
               </div>
             </div>
+          </div>
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
+            <div className="flex-1 relative">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 dark:text-gray-100 pointer-events-none opacity-70" size={16} />
+              <input
+                type="text"
+                placeholder="Search information..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-2.5 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] rounded-lg shadow-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:outline-none transition-all duration-300"
+              />
+            </div>
+            <button
+              onClick={handleAddNew}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-accent-light dark:bg-accent-dark text-white rounded-lg hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 shadow-sm hover:shadow transition-all duration-300 shrink-0 text-sm"
+            >
+              <FaPlus className="w-4 h-4" />
+              <span>Add New</span>
+            </button>
           </div>
         </div>
 
@@ -137,18 +147,7 @@ export default function CompanyProfilePage() {
                   {searchTerm ? `Search Results (${filteredEntries.length})` : 'All Information'}
                 </h2>
               </div>
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search information..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 pl-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                  />
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                </div>
-              </div>
+
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredEntries.length === 0 ? (
                   <div className="p-6 text-center text-gray-500 dark:text-gray-400">
