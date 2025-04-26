@@ -17,7 +17,7 @@ export default function FAQsPage() {
 
   const router = useRouter();
   const [faqs, setFaqs] = useState([]);
-  const [newFaq, setNewFaq] = useState({ question: '', answer: '', category: '' });
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '', category: '', tags: '' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -53,6 +53,12 @@ export default function FAQsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Process tags into an array
+      const processedTags = newFaq.tags
+        .split('\n')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
       if (editingId) {
         // Update existing FAQ
         const { data, error } = await supabase
@@ -60,7 +66,8 @@ export default function FAQsPage() {
           .update({
             question: newFaq.question,
             answer: newFaq.answer,
-            category: newFaq.category
+            category: newFaq.category,
+            tags: processedTags
           })
           .eq('id', editingId)
           .select();
@@ -74,7 +81,8 @@ export default function FAQsPage() {
           .insert([{
             question: newFaq.question,
             answer: newFaq.answer,
-            category: newFaq.category
+            category: newFaq.category,
+            tags: processedTags
           }]);
 
         if (error) throw error;
@@ -82,7 +90,7 @@ export default function FAQsPage() {
       }
 
       // Reset form and refresh FAQs
-      setNewFaq({ question: '', answer: '', category: '' });
+      setNewFaq({ question: '', answer: '', category: '', tags: '' });
       setEditingId(null);
       setShowForm(false); // Hide form after successful submit
       fetchFaqs();
@@ -96,7 +104,8 @@ export default function FAQsPage() {
     setNewFaq({
       question: faq.question,
       answer: faq.answer,
-      category: faq.category
+      category: faq.category,
+      tags: Array.isArray(faq.tags) ? faq.tags.join('\n') : ''
     });
     setEditingId(faq.id);
     setShowForm(true); // Show form when editing
@@ -189,41 +198,61 @@ export default function FAQsPage() {
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Question
-                  </label>
-                  <input
-                    type="text"
-                    value={newFaq.question}
-                    onChange={(e) => setNewFaq({...newFaq, question: e.target.value})}
-                    className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Answer
-                  </label>
-                  <textarea
-                    value={newFaq.answer}
-                    onChange={(e) => setNewFaq({...newFaq, answer: e.target.value})}
-                    rows={6}
-                    className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category
-                  </label>
-                  <input
-                    type="text"
-                    value={newFaq.category}
-                    onChange={(e) => setNewFaq({...newFaq, category: e.target.value})}
-                    className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                    required
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Question
+                    </label>
+                    <input
+                      type="text"
+                      value={newFaq.question}
+                      onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Answer
+                    </label>
+                    <textarea
+                      value={newFaq.answer}
+                      onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={newFaq.category}
+                      onChange={(e) => setNewFaq({ ...newFaq, category: e.target.value })}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tags (one per line)
+                    </label>
+                    <textarea
+                      value={newFaq.tags}
+                      onChange={(e) => setNewFaq({ ...newFaq, tags: e.target.value })}
+                      rows={3}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
+                      placeholder="screen size
+aspect ratio
+gain
+wide angle"
+                    />
+                  </div>
                 </div>
                 
                 <div className="flex justify-end gap-3">
@@ -272,10 +301,15 @@ export default function FAQsPage() {
                         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                           {faq.answer}
                         </p>
-                        <div className="mt-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                           <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded">
                             {faq.category}
                           </span>
+                          {Array.isArray(faq.tags) && faq.tags.map((tag, index) => (
+                            <span key={index} className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                              {tag}
+                            </span>
+                          ))}
                         </div>
                       </div>
                       <div className="ml-4 flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
