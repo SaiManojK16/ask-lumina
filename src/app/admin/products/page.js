@@ -406,7 +406,7 @@ export default function ProductsPage() {
                       onChange={(e) => setNewProduct({ ...newProduct, features: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                      placeholder="Feature title: Feature details\nAnother feature: More details"
+                      placeholder="Enter features, one per line:&#10;High Contrast: Superior image quality&#10;Easy Installation: Quick setup process"
                     />
                   </div>
 
@@ -419,7 +419,7 @@ export default function ProductsPage() {
                       onChange={(e) => setNewProduct({ ...newProduct, why_choose_this: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                      placeholder="Reason 1\nReason 2\nReason 3"
+                      placeholder="Enter reasons, one per line:&#10;Perfect for home theaters&#10;Easy to clean and maintain"
                     />
                   </div>
 
@@ -432,7 +432,7 @@ export default function ProductsPage() {
                       onChange={(e) => setNewProduct({ ...newProduct, product_specs: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                      placeholder="Specification 1\nSpecification 2\nSpecification 3"
+                      placeholder="Enter specifications, one per line:&#10;Screen Size: 100 inches&#10;Weight: 15 kg"
                     />
                   </div>
 

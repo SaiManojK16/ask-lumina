@@ -247,10 +247,7 @@ export default function FAQsPage() {
                       onChange={(e) => setNewFaq({ ...newFaq, tags: e.target.value })}
                       rows={3}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
-                      placeholder="screen size
-aspect ratio
-gain
-wide angle"
+                      placeholder="Enter tags, one per line:&#10;screen size&#10;installation&#10;maintenance"
                     />
                   </div>
                 </div>
