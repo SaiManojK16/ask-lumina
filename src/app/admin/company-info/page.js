@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import Header from '@/components/Header';
-import { FaEdit, FaTimes, FaArrowLeft, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTimes, FaArrowLeft, FaPlus, FaSearch, FaTrash } from 'react-icons/fa';
 import { createPortal } from 'react-dom';
 
 export default function CompanyProfilePage() {
@@ -75,7 +75,7 @@ export default function CompanyProfilePage() {
       setNewValue('');
       setIsNewEntry(false);
       setNewKey('');
-      alert('Profile updated successfully!');
+      alert(isNewEntry ? 'Entry created successfully!' : 'Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Error saving profile');
@@ -86,6 +86,29 @@ export default function CompanyProfilePage() {
     setEditingKey(key);
     setNewValue(profile[key] || '');
     setShowForm(true);
+  };
+
+  const handleDelete = async (key) => {
+    if (!confirm('Are you sure you want to delete this entry?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('company_info')
+        .delete()
+        .eq('key', key);
+
+      if (error) throw error;
+      
+      // Remove from local state
+      const newProfile = { ...profile };
+      delete newProfile[key];
+      setProfile(newProfile);
+      
+      alert('Entry deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      alert('Error deleting entry');
+    }
   };
 
   return (
@@ -176,6 +199,14 @@ export default function CompanyProfilePage() {
                             >
                               <FaEdit size={14} />
                               <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(key)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors"
+                              title="Delete Entry"
+                            >
+                              <FaTrash size={14} />
+                              <span>Delete</span>
                             </button>
                           </div>
                         </div>
