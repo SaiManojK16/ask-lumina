@@ -24,9 +24,9 @@ export default function ProductsPage() {
     projection_type: '',
     gain: '',
     technical_datasheet: '',
-    features: [],
-    why_choose_this: [],
-    product_specs: []
+    features: '',
+    why_choose_this: '',
+    product_specs: ''
   });
 
   useEffect(() => {
@@ -53,10 +53,24 @@ export default function ProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Process the textarea values before submission
+      const processedProduct = {
+        ...newProduct,
+        features: newProduct.features.split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            const [title, ...details] = line.split(':');
+            return details.length > 0
+              ? { title: title.trim(), details: details.join(':').trim() }
+              : { title: line.trim(), details: '' };
+          }),
+        why_choose_this: newProduct.why_choose_this.split('\n').filter(line => line.trim()),
+        product_specs: newProduct.product_specs.split('\n').filter(line => line.trim())
+      };
       if (editingId) {
         const { error } = await supabase
           .from('products')
-          .update(newProduct)
+          .update(processedProduct)
           .eq('id', editingId);
 
         if (error) throw error;
@@ -64,7 +78,7 @@ export default function ProductsPage() {
       } else {
         const { error } = await supabase
           .from('products')
-          .insert([newProduct]);
+          .insert([processedProduct]);
 
         if (error) throw error;
         alert('Product added successfully!');
@@ -78,9 +92,9 @@ export default function ProductsPage() {
         projection_type: '',
         gain: '',
         technical_datasheet: '',
-        features: [],
-        why_choose_this: [],
-        product_specs: []
+        features: '',
+        why_choose_this: '',
+        product_specs: ''
       });
       setEditingId(null);
       setShowForm(false);
@@ -92,12 +106,21 @@ export default function ProductsPage() {
   };
 
   const handleEdit = (product) => {
-    // Ensure all fields are properly initialized
+    // Format the arrays into newline-separated strings
     setNewProduct({
       ...product,
-      features: Array.isArray(product.features) ? product.features : [],
-      why_choose_this: Array.isArray(product.why_choose_this) ? product.why_choose_this : [],
-      product_specs: Array.isArray(product.product_specs) ? product.product_specs : [],
+      features: Array.isArray(product.features) 
+        ? product.features.map(f => {
+            if (typeof f === 'string') return f;
+            return f.details ? `${f.title}: ${f.details}` : f.title;
+          }).join('\n')
+        : '',
+      why_choose_this: Array.isArray(product.why_choose_this) 
+        ? product.why_choose_this.join('\n')
+        : '',
+      product_specs: Array.isArray(product.product_specs) 
+        ? product.product_specs.join('\n')
+        : '',
       gain: product.gain || '',
       technical_datasheet: product.technical_datasheet || ''
     });
@@ -379,17 +402,8 @@ export default function ProductsPage() {
                       Features (one per line)
                     </label>
                     <textarea
-                      value={Array.isArray(newProduct.features) ? newProduct.features.map(f => typeof f === 'string' ? f : `${f.title}: ${f.details}`).join('\n') : ''}
-                      onChange={(e) => {
-                        const lines = e.target.value.split('\n').filter(line => line.trim());
-                        const features = lines.map(line => {
-                          const [title, ...details] = line.split(':');
-                          return details.length > 0 
-                            ? { title: title.trim(), details: details.join(':').trim() }
-                            : { title: line.trim(), details: '' };
-                        });
-                        setNewProduct({ ...newProduct, features });
-                      }}
+                      value={newProduct.features}
+                      onChange={(e) => setNewProduct({ ...newProduct, features: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                       placeholder="Feature title: Feature details\nAnother feature: More details"
@@ -401,11 +415,8 @@ export default function ProductsPage() {
                       Why Choose This (one per line)
                     </label>
                     <textarea
-                      value={Array.isArray(newProduct.why_choose_this) ? newProduct.why_choose_this.join('\n') : ''}
-                      onChange={(e) => setNewProduct({ 
-                        ...newProduct, 
-                        why_choose_this: e.target.value.split('\n').filter(line => line.trim())
-                      })}
+                      value={newProduct.why_choose_this}
+                      onChange={(e) => setNewProduct({ ...newProduct, why_choose_this: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                       placeholder="Reason 1\nReason 2\nReason 3"
@@ -417,11 +428,8 @@ export default function ProductsPage() {
                       Product Specifications (one per line)
                     </label>
                     <textarea
-                      value={Array.isArray(newProduct.product_specs) ? newProduct.product_specs.join('\n') : ''}
-                      onChange={(e) => setNewProduct({ 
-                        ...newProduct, 
-                        product_specs: e.target.value.split('\n').filter(line => line.trim())
-                      })}
+                      value={newProduct.product_specs}
+                      onChange={(e) => setNewProduct({ ...newProduct, product_specs: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-light/20 dark:focus:ring-accent-dark/20 focus:border-accent-light dark:focus:border-accent-dark"
                       placeholder="Specification 1\nSpecification 2\nSpecification 3"
