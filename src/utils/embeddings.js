@@ -300,11 +300,16 @@ export async function deleteEmbeddings({ type, ids }) {
 }
 
 // Function to search relevant content
-export async function searchRelevantContent(query, recentMessages = []) {
+export async function searchRelevantContent(query, previousMessages = []) {
+  // Combine current query with weighted previous messages for context
+  const contextualQuery = [
+    query,
+    ...previousMessages.map(msg => msg.toLowerCase())
+  ].join(' ');
   try {
     // Clean and prepare queries
     const cleanQuery = query.trim().toLowerCase();
-    const cleanContext = recentMessages.map(msg => msg.trim().toLowerCase());
+    const cleanContext = previousMessages.map(msg => msg.trim().toLowerCase());
 
     // Create embeddings for both query and each context message
     const [queryEmbedding, ...contextEmbeddings] = await Promise.all([
@@ -329,6 +334,20 @@ export async function searchRelevantContent(query, recentMessages = []) {
       const contextSum = contextValues.reduce((a, b) => a + b, 0);
       return (val * 0.6 + contextSum * 0.4); // 60% current query, 40% weighted context
     });
+
+    // Extract key terms for content type detection
+  const productTerms = /screen|projector|lumina|theatre|theater|projection|gain|material/i;
+  const faqTerms = /faq|question|how|what|why|when/i;
+  const supportTerms = /contact|support|region|city|state|location/i;
+  const companyTerms = /company|about|lumina|policy|warranty/i;
+
+  // Determine content types to prioritize based on query
+  const contentWeights = {
+    products: productTerms.test(contextualQuery) ? 1.2 : 1,
+    faqs: faqTerms.test(contextualQuery) ? 1.2 : 1,
+    regional_support: supportTerms.test(contextualQuery) ? 1.2 : 1,
+    company_info: companyTerms.test(contextualQuery) ? 1.2 : 1
+  };
 
     const { data: matches, error } = await supabase.rpc('match_embeddings', {
       query_embedding: combinedEmbedding,
@@ -371,7 +390,7 @@ export async function searchRelevantContent(query, recentMessages = []) {
         case 'faqs':
           // FAQ-specific scoring
           const isQuestion = queryTerms.some(term => 
-            ['how', 'what', 'why', 'when', 'where', 'can', 'will'].includes(term));
+            ['how', 'what', 'why', 'when', 'where', 'can', 'will', 'should', 'difference', 'between', 'compare', 'vs', 'versus'].includes(term));
           const questionMatch = metadata.question ? 
             queryTerms.every(term => metadata.question.toLowerCase().includes(term)) ? 0.4 : 0 : 0;
           const categoryMatch = metadata.category && queryTerms.some(term => 
@@ -469,10 +488,12 @@ export async function searchRelevantContent(query, recentMessages = []) {
         }
       }) ? 0.15 : 0;
 
+      const contentWeight = contentWeights[contentType] || 1;
+
       return {
         ...match,
         score: (
-          match.similarity * 0.40 +    // 40% weight to embedding similarity
+          match.similarity * contentWeight * 0.40 +    // 40% weight to embedding similarity
           keywordScore * 0.35 +        // 35% weight to keyword matching
           intentAlignment * 0.15 +     // 15% for intent alignment
           (contentType === 'products' ? 0.05 : 0) +        // 5% boost for products

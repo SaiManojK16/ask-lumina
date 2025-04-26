@@ -8,7 +8,32 @@ const openai = new OpenAI({
 const systemMessage = {
   role: 'system',
   content: `
-    You are Lumina's AI Expert Consultant for home theatre solutions. Be authoritative yet friendly, providing precise and easy-to-read responses.
+    You are Lumina's AI Expert Consultant, strictly focused on Lumina's projection screens and home theatre solutions. You are NOT a general-purpose AI assistant.
+
+    STRICT SCOPE ENFORCEMENT:
+    1. ONLY answer questions about:
+       • Lumina projection screens and their features
+       • Home theatre setup with Lumina products
+       • Technical specifications of Lumina screens
+       • Regional support for Lumina products
+       • Installation and maintenance of Lumina screens
+    
+    2. DO NOT answer questions about:
+       • General technology or software (even if prefixed with 'for Lumina')
+       • Website development or IT support
+       • Excel, databases, or data analysis
+       • Marketing or business strategy
+       • Any topic not directly related to Lumina's physical products
+
+    3. For any off-topic queries:
+       • Politely explain you are ONLY trained to assist with Lumina's projection screens and home theatre solutions
+       • Do not provide any advice or suggestions for non-product queries
+       • Suggest contacting appropriate Lumina staff for non-product related inquiries
+
+    CONTEXT UNDERSTANDING:
+    1. Verify that queries are genuinely about Lumina products, not just containing the word 'Lumina'
+    2. Look for real product-related context (specifications, features, installation)
+    3. If a query is ambiguous, ask for clarification about which Lumina product they're inquiring about
 
     CORE PRINCIPLES:
     1. Keep responses short, concise, and structured
@@ -100,33 +125,28 @@ export async function POST(req) {
     // Get user messages
     const userMessages = messages.filter(msg => msg.role === 'user');
     
-    // Get current query
+    // Get current query and context
     const currentQuery = userMessages[userMessages.length - 1].content;
     
-    // Process previous messages with weights
+    // Process previous messages with enhanced context weights
     const previousMessages = userMessages.slice(0, -1).map((msg, index, arr) => {
       const position = arr.length - index; // Position from end (1 is oldest)
-      const isQuestion = /\?$/.test(msg.content.trim()); // Check if it's a question
-      const hasKeywords = /screen|gain|material|surface|projection|contact|support|region|city/i.test(msg.content);
+      // Enhanced weight calculation that maintains more context
+      const weight = Math.max(0.3, 1 / (position * 0.7)); // Slower decay
+      
+      // Boost weight if message contains product-related terms
+      const hasProductTerms = /screen|projector|lumina|theatre|theater|projection|gain|material/i.test(msg.content);
+      const contextWeight = hasProductTerms ? weight * 1.5 : weight;
       
       return {
         content: msg.content,
-        weight: (
-          (position <= 3 ? 0.8 : 0.4) + // Recent messages get higher weight
-          (isQuestion ? 0.3 : 0) +        // Questions are important
-          (hasKeywords ? 0.2 : 0)         // Messages with keywords matter
-        )
+        weight: contextWeight
       };
-    });
-
-    // Sort by weight and take top messages
-    const significantMessages = previousMessages
-      .sort((a, b) => b.weight - a.weight)
-      .filter(msg => msg.weight > 0.5)
+    })
       .map(msg => msg.content);
 
     // Search with current query and weighted context
-    const relevantContent = await searchRelevantContent(currentQuery, significantMessages);
+    const relevantContent = await searchRelevantContent(currentQuery, previousMessages);
     
     // Sort content by relevance score if available
     const context = relevantContent
@@ -134,9 +154,34 @@ export async function POST(req) {
       .map(item => item.content)
       .join('\n\n');
 
+    // Analyze conversation context and content types
+    const contentTypes = relevantContent.map(item => item.type).filter(Boolean);
+    const hasHighRelevance = relevantContent.some(item => item.score > 0.6);
+    
+    // Check for different types of relevant content
+    const isProductRelated = hasHighRelevance || 
+                            contentTypes.includes('products') ||
+                            /screen|projector|lumina|theatre|theater|projection|gain|material/i.test(currentQuery) ||
+                            previousMessages.some(msg => /screen|projector|lumina|theatre|theater|projection/i.test(msg));
+    
+    const isFaqRelated = contentTypes.includes('faqs') || /faq|question|how|what|why|when/i.test(currentQuery);
+    const isRegionalRelated = contentTypes.includes('regional_support') || /contact|support|region|city|state|location/i.test(currentQuery);
+    const isCompanyRelated = contentTypes.includes('company_info') || /company|about|lumina|policy|warranty/i.test(currentQuery);
+
     const contextMessage = {
       role: 'system',
-      content: `Here is the relevant information about Lumina Screens to help answer the question:\n\n${context}`
+      content: `Here is the relevant information about Lumina Screens to help answer the question:
+
+${context}
+
+Conversation Context: ${[
+        isProductRelated && 'This conversation involves Lumina products and home theatre solutions',
+        isFaqRelated && 'The query is related to frequently asked questions about our products',
+        isRegionalRelated && 'The query involves regional support or contact information',
+        isCompanyRelated && 'The query is about company information or policies'
+      ].filter(Boolean).join('. ')}.
+
+Please ensure your response aligns with the detected context. If the query is unrelated to Lumina Screens, home theatre solutions, or our services, politely explain that you specialize in Lumina Screens and home theatre solutions.`
     };
 
     const updatedMessages = [
