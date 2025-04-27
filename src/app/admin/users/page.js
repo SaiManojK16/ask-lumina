@@ -162,7 +162,7 @@ export default function AdminUsers() {
           <div className="bg-white/90 dark:bg-gray-800/90 shadow-sm rounded-xl overflow-hidden ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] backdrop-blur-sm">
             <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gradient-to-br from-accent-light/[0.07] to-transparent dark:from-accent-dark/[0.07] dark:to-transparent">
               <h2 className="text-base font-medium text-gray-900 dark:text-white">
-                Admins & Super Admins ({users.length})
+                Admins ({users.length})
               </h2>
             </div>
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
