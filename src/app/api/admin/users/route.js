@@ -30,6 +30,7 @@ export async function GET(req) {
       email: user.email,
       name: user.user_metadata?.full_name || user.email,
       role: user.user_metadata?.userRole || 'user',
+      user_metadata: user.user_metadata,
       lastSignIn: user.last_sign_in_at,
       createdAt: user.created_at
     }));
