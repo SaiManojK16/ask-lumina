@@ -8,9 +8,12 @@ import {
   FaQuestionCircle, 
   FaBuilding, 
   FaMapMarkerAlt,
-  FaChevronRight 
+  FaChevronRight,
+  FaUsers 
 } from 'react-icons/fa';
 import { supabase } from '@/utils/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { isSuperAdmin } from '@/utils/roles';
 
 const sections = [
   {
@@ -62,6 +65,16 @@ const sections = [
 export default function AdminDashboard() {
   const router = useRouter();
   const [metrics, setMetrics] = useState({});
+  const [user, setUser] = useState(null);
+  const supabaseClient = createClientComponentClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -106,6 +119,16 @@ export default function AdminDashboard() {
             <p className="mt-3 text-base text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Secure enterprise management interface for system configuration and content administration
             </p>
+            {user && isSuperAdmin(user) && (
+              <button
+                onClick={() => router.push('/admin/users')}
+                className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-accent-light/10 dark:bg-accent-dark/10 text-accent-light dark:text-accent-dark rounded-lg hover:bg-accent-light/20 dark:hover:bg-accent-dark/20 transition-colors text-sm font-medium group"
+              >
+                <FaUsers className="h-4 w-4" />
+                Manage Users
+                <FaChevronRight className="h-3 w-3 transform group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">

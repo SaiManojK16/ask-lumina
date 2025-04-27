@@ -3,10 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
+import Link from 'next/link';
+import { getUserRole, ROLES } from '@/utils/roles';
 
 export default function ProfileDropdown() {
   const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const supabase = createClientComponentClient();
@@ -45,8 +48,15 @@ export default function ProfileDropdown() {
           avatar_url: user.user_metadata?.avatar_url || identityData?.avatar_url || identityData?.picture,
         };
 
-        console.log('User profile:', profile); // Debug log
         setUserProfile(profile);
+        
+        // Check if user is admin
+        console.log('Session:', session);
+        console.log('User metadata:', session.user.user_metadata);
+        const role = getUserRole(session);
+        console.log('User role:', role);
+        setIsAdmin(role === ROLES.ADMIN);
+        console.log('Is admin:', role === ROLES.ADMIN);
         return;
       }
 
@@ -98,13 +108,24 @@ export default function ProfileDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50">
           <div className="px-4 py-3">
             <p className="text-sm text-gray-700 dark:text-gray-200">{userProfile.name}</p>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
               {userProfile.email}
             </p>
           </div>
+          {isAdmin && (
+            <div className="border-t border-gray-100 dark:border-gray-700">
+              <Link
+                href="/admin"
+                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setIsOpen(false)}
+              >
+                Admin Dashboard
+              </Link>
+            </div>
+          )}
           <div className="border-t border-gray-100 dark:border-gray-700">
             <button
               onClick={async () => {
