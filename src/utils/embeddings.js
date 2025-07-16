@@ -114,6 +114,11 @@ async function processContentToChunks(data, type) {
             surface: product.surface.toLowerCase(),
             projection_type: (product.projection_type || '').toLowerCase()
           },
+          // Move detailed information to metadata
+          technical_datasheet: product.technical_datasheet || '',
+          product_specs: product.product_specs || [],
+          features: product.features || [],
+          why_choose_this: product.why_choose_this || [],
           keywords: [
             product.name.toLowerCase(),
             product.material.toLowerCase(),
@@ -141,7 +146,7 @@ async function processContentToChunks(data, type) {
 
     case CONTENT_TYPES.FAQ:
       return data.map(faq => ({
-        content: `FAQs: Q: ${faq.question}\nA: ${faq.answer}${faq.category ? `\nCategory: ${faq.category}` : ''}${faq.tags ? `\nTags: ${faq.tags.join(', ')}` : ''}`,
+        content: `FAQs: Q: ${faq.question}\nA: ${faq.answer}`,
         type: CONTENT_TYPES.FAQ,
           source_id: faq.id.toString(),
           metadata: {
@@ -161,7 +166,7 @@ async function processContentToChunks(data, type) {
 
     case CONTENT_TYPES.REGIONAL_SUPPORT:
       return data.map(person => ({
-        content: `Regional Support / Sales Contact: ${person.name}
+        content: `Regional Support / Sales Contact Name: ${person.name}
         Designation: ${person.designation}
         Contact: ${person.contact_number}
         Email: ${person.email}
@@ -283,16 +288,39 @@ export async function createAndStoreEmbeddings({ type, ids = null, rebuild = fal
 
 export async function deleteEmbeddings({ type, ids }) {
   try {
-    const query = supabase.from('lumina_embeddings').delete().eq('metadata->>type', type);
+    console.log(`Attempting to delete embeddings for ${type}${ids ? ` with ids: ${ids.join(', ')}` : ''}`);
     
-    if (ids) {
-      query.in('metadata->>id', ids);
+    // First, check if we can find the embeddings
+    const { data: checkData } = await supabase
+      .from('lumina_embeddings')
+      .select('id, source_id, metadata')
+      .eq('type', type);
+    
+    if (checkData) {
+      console.log(`Found ${checkData.length} embeddings for type ${type}`);
+      if (ids) {
+        const matchingIds = checkData.filter(item => ids.includes(item.source_id));
+        console.log(`Of which ${matchingIds.length} match the requested ids`);
+      }
     }
     
-    const { error } = await query;
+    // Now perform the delete operation
+    let query = supabase.from('lumina_embeddings').delete();
+    
+    // First filter by type
+    query = query.eq('type', type);
+    
+    // If specific IDs are provided, filter by source_id
+    if (ids && ids.length > 0) {
+      // Convert all IDs to strings for consistent comparison
+      const stringIds = ids.map(id => id.toString());
+      query = query.in('source_id', stringIds);
+    }
+    
+    const { error, count } = await query;
     if (error) throw error;
     
-    console.log(`Successfully deleted embeddings for ${type}${ids ? ` with ids: ${ids.join(', ')}` : ''}`);
+    console.log(`Successfully deleted ${count || 'unknown number of'} embeddings for ${type}${ids ? ` with ids: ${ids.join(', ')}` : ''}`);
   } catch (error) {
     console.error('Error in deleteEmbeddings:', error);
     throw error;

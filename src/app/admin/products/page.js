@@ -16,6 +16,8 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -52,6 +54,7 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       // Process the textarea values before submission
       const processedProduct = {
@@ -67,21 +70,33 @@ export default function ProductsPage() {
         why_choose_this: newProduct.why_choose_this.split('\n').filter(line => line.trim()),
         product_specs: newProduct.product_specs.split('\n').filter(line => line.trim())
       };
+      
+      // Use the API route instead of direct database operations
+      const apiUrl = '/api/products';
+      let method, body;
+
       if (editingId) {
-        const { error } = await supabase
-          .from('products')
-          .update(processedProduct)
-          .eq('id', editingId);
-
-        if (error) throw error;
-        alert('Product updated successfully!');
+        // Update existing product
+        method = 'PUT';
+        body = { ...processedProduct, id: editingId };
       } else {
-        const { error } = await supabase
-          .from('products')
-          .insert([processedProduct]);
+        // Add new product
+        method = 'POST';
+        body = processedProduct;
+      }
 
-        if (error) throw error;
-        alert('Product added successfully!');
+      const response = await fetch(apiUrl, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save');
       }
 
       setNewProduct({
@@ -99,9 +114,12 @@ export default function ProductsPage() {
       setEditingId(null);
       setShowForm(false);
       fetchProducts();
+      alert(editingId ? 'Product updated successfully!' : 'Product added successfully!');
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Error saving product');
+      alert('Error saving product: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -132,20 +150,26 @@ export default function ProductsPage() {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
+      // Use the API route for deletion to ensure embeddings are also deleted
+      const response = await fetch(`/api/products?id=${id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      const result = await response.json();
       
-      setProducts(products.filter(product => product.id !== id));
-      setSelectedProduct(null);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete');
+      }
+      
       alert('Product deleted successfully!');
+      fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error deleting product');
+      alert('Error deleting product: ' + error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -228,6 +252,7 @@ export default function ProductsPage() {
               onBack={() => setSelectedProduct(null)}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isDeleting={isDeleting}
             />
           ) : (
             <div className="bg-white/90 dark:bg-gray-800/90 shadow-sm rounded-xl overflow-hidden ring-1 ring-gray-900/[0.05] dark:ring-white/[0.05] backdrop-blur-sm">
@@ -446,9 +471,18 @@ export default function ProductsPage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors"
+                      disabled={isSaving}
+                      className={`px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                      {editingId ? 'Save Changes' : 'Add Product'}
+                      {isSaving ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {editingId ? 'Saving...' : 'Adding...'}
+                        </span>
+                      ) : (editingId ? 'Save Changes' : 'Add Product')}
                     </button>
                   </div>
                 </form>

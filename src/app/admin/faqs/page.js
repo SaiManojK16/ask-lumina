@@ -22,6 +22,8 @@ export default function FAQsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const filteredFaqs = faqs.filter(faq =>
     faq.question?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,6 +54,7 @@ export default function FAQsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       // Process tags into an array
       const processedTags = newFaq.tags
@@ -59,34 +62,40 @@ export default function FAQsPage() {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
+      // Prepare the data to be sent to the API
+      const faqData = {
+        question: newFaq.question,
+        answer: newFaq.answer,
+        category: newFaq.category,
+        tags: processedTags
+      };
+
+      // Use the API route instead of direct database operations
+      const apiUrl = '/api/faqs';
+      let method, body;
+
       if (editingId) {
         // Update existing FAQ
-        const { data, error } = await supabase
-          .from('faqs')
-          .update({
-            question: newFaq.question,
-            answer: newFaq.answer,
-            category: newFaq.category,
-            tags: processedTags
-          })
-          .eq('id', editingId)
-          .select();
-
-        if (error) throw error;
-        alert('FAQ updated successfully!');
+        method = 'PUT';
+        body = { ...faqData, id: editingId };
       } else {
         // Add new FAQ
-        const { error } = await supabase
-          .from('faqs')
-          .insert([{
-            question: newFaq.question,
-            answer: newFaq.answer,
-            category: newFaq.category,
-            tags: processedTags
-          }]);
+        method = 'POST';
+        body = faqData;
+      }
 
-        if (error) throw error;
-        alert('FAQ added successfully!');
+      const response = await fetch(apiUrl, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save');
       }
 
       // Reset form and refresh FAQs
@@ -94,9 +103,12 @@ export default function FAQsPage() {
       setEditingId(null);
       setShowForm(false); // Hide form after successful submit
       fetchFaqs();
+      alert(editingId ? 'FAQ updated successfully!' : 'FAQ added successfully!');
     } catch (error) {
       console.error('Error saving FAQ:', error);
-      alert('Error saving FAQ');
+      alert('Error saving FAQ: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -114,18 +126,26 @@ export default function FAQsPage() {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
     
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('faqs')
-        .delete()
-        .eq('id', id);
+      // Use the API route for deletion to ensure embeddings are also deleted
+      const response = await fetch(`/api/faqs?id=${id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete');
+      }
+      
       alert('FAQ deleted successfully!');
       fetchFaqs();
     } catch (error) {
       console.error('Error deleting FAQ:', error);
-      alert('Error deleting FAQ');
+      alert('Error deleting FAQ: ' + error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -262,9 +282,18 @@ export default function FAQsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors"
+                    disabled={isSaving}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    {editingId ? 'Save Changes' : 'Add FAQ'}
+                    {isSaving ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {editingId ? 'Saving...' : 'Adding...'}
+                      </span>
+                    ) : (editingId ? 'Save Changes' : 'Add FAQ')}
                   </button>
                 </div>
               </form>
@@ -320,11 +349,24 @@ export default function FAQsPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(faq.id)}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors"
+                          disabled={isDeleting}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors ${isDeleting ? 'opacity-70 cursor-not-allowed' : ''}`}
                           title="Delete FAQ"
                         >
-                          <FaTrash size={14} />
-                          <span>Delete</span>
+                          {isDeleting ? (
+                            <>
+                              <svg className="animate-spin h-3.5 w-3.5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>Deleting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaTrash size={14} />
+                              <span>Delete</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

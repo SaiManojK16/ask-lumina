@@ -17,6 +17,8 @@ export default function CompanyProfilePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewEntry, setIsNewEntry] = useState(false);
   const [newKey, setNewKey] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -57,17 +59,44 @@ export default function CompanyProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       const updates = {
         key: isNewEntry ? newKey : editingKey,
         content: newValue
       };
 
-      const { error } = await supabase
-        .from('company_info')
-        .upsert(updates, { onConflict: 'key' });
+      // Get the ID if this is an update
+      let id;
+      if (!isNewEntry) {
+        const { data, error: fetchError } = await supabase
+          .from('company_info')
+          .select('id')
+          .eq('key', editingKey)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        id = data?.id;
+      }
 
-      if (error) throw error;
+      // Use the API route instead of direct database operations
+      const apiUrl = '/api/company-info';
+      const method = isNewEntry ? 'POST' : 'PUT';
+      const body = isNewEntry ? updates : { ...updates, id };
+
+      const response = await fetch(apiUrl, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save');
+      }
       
       setProfile(prev => ({ ...prev, [updates.key]: updates.content }));
       setEditingKey(null);
@@ -78,7 +107,9 @@ export default function CompanyProfilePage() {
       alert(isNewEntry ? 'Entry created successfully!' : 'Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Error saving profile');
+      alert('Error saving profile: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -91,13 +122,32 @@ export default function CompanyProfilePage() {
   const handleDelete = async (key) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
     
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
+      // First get the ID of the entry
+      const { data, error: fetchError } = await supabase
         .from('company_info')
-        .delete()
-        .eq('key', key);
+        .select('id')
+        .eq('key', key)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      const id = data?.id;
+      
+      if (!id) {
+        throw new Error('Could not find entry to delete');
+      }
 
-      if (error) throw error;
+      // Use the API route for deletion to ensure embeddings are also deleted
+      const response = await fetch(`/api/company-info?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete');
+      }
       
       // Remove from local state
       const newProfile = { ...profile };
@@ -107,7 +157,9 @@ export default function CompanyProfilePage() {
       alert('Entry deleted successfully!');
     } catch (error) {
       console.error('Error deleting entry:', error);
-      alert('Error deleting entry');
+      alert('Error deleting entry: ' + error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -202,11 +254,24 @@ export default function CompanyProfilePage() {
                             </button>
                             <button
                               onClick={() => handleDelete(key)}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors"
+                              disabled={isDeleting}
+                              className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/10 dark:bg-red-400/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-400/20 transition-colors ${isDeleting ? 'opacity-70 cursor-not-allowed' : ''}`}
                               title="Delete Entry"
                             >
-                              <FaTrash size={14} />
-                              <span>Delete</span>
+                              {isDeleting ? (
+                                <>
+                                  <svg className="animate-spin h-3.5 w-3.5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  <span>Deleting...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FaTrash size={14} />
+                                  <span>Delete</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -275,9 +340,18 @@ export default function CompanyProfilePage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors"
+                    disabled={isSaving}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-accent-light dark:bg-accent-dark hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 rounded-lg transition-colors ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Save Changes
+                    {isSaving ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : 'Save Changes'}
                   </button>
                 </div>
               </form>
