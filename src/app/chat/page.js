@@ -156,7 +156,7 @@ export default function ChatPage() {
               <button
                 className="ml-4 w-10 h-10 bg-gradient-to-r from-accent-light to-accent-dark rounded-full flex justify-center items-center"
                 disabled={loading}
-                onClick={handleQuery}
+                onClick={() => handleQuery()}
               >
                 <FaArrowUp className="text-white" />
               </button>
